@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Play, Pause, RotateCcw } from 'lucide-react';
 const VisualizadorSimplificado = React.lazy(() => import('./visualizador_simplificado'));
 
@@ -74,13 +74,41 @@ const IntegralOdometro = () => {
     setRectangulosCombustible([]);
   };
 
-  // Calcular geometría del gráfico
+  // Calcular geometría del gráfico (responsivo al ancho del contenedor)
   const marginLeft = 50;
   const marginRight = 20;
   const graphHeight = 300;
-  const graphWidth = 720;
-  const scaleX = (graphWidth - marginLeft - marginRight) / maxTime; // píxeles por segundo
+
+  // Refs para medir el ancho disponible de cada contenedor de gráfico
+  const speedRef = useRef<HTMLDivElement | null>(null);
+  const fuelRef = useRef<HTMLDivElement | null>(null);
+  const [speedWidth, setSpeedWidth] = useState<number>(720);
+  const [fuelWidth, setFuelWidth] = useState<number>(720);
+
+  // Escalas X dependientes del ancho disponible
+  const scaleXSpeed = Math.max(1, (speedWidth - marginLeft - marginRight) / maxTime); // píxeles por segundo
+  const scaleXFuel = Math.max(1, (fuelWidth - marginLeft - marginRight) / maxTime);   // píxeles por segundo
   const scaleY = 4; // píxeles por km/h
+
+  useEffect(() => {
+    const update = () => {
+      if (speedRef.current) setSpeedWidth(speedRef.current.clientWidth);
+      if (fuelRef.current) setFuelWidth(fuelRef.current.clientWidth);
+    };
+    update();
+
+    let ro: ResizeObserver | null = null;
+    if ('ResizeObserver' in window) {
+      ro = new ResizeObserver(update);
+      if (speedRef.current) ro.observe(speedRef.current);
+      if (fuelRef.current) ro.observe(fuelRef.current);
+    }
+    window.addEventListener('resize', update);
+    return () => {
+      window.removeEventListener('resize', update);
+      if (ro) ro.disconnect();
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -726,15 +754,15 @@ const IntegralOdometro = () => {
               </div>
 
               {/* Gráfico */}
-              <div className="bg-white p-6 rounded-lg border">
+              <div ref={speedRef} className="bg-white p-6 rounded-lg border">
                 <h3 className="font-bold mb-4">Gráfico Velocidad vs Tiempo</h3>
-                <svg width={graphWidth} height={graphHeight} className="border">
+                <svg width={speedWidth} height={graphHeight} className="border">
                   {/* Ejes */}
                   <line x1={marginLeft} y1={20} x2={marginLeft} y2={260} stroke="black" strokeWidth="2" />
-                  <line x1={marginLeft} y1={260} x2={graphWidth - marginRight} y2={260} stroke="black" strokeWidth="2" />
+                  <line x1={marginLeft} y1={260} x2={speedWidth - marginRight} y2={260} stroke="black" strokeWidth="2" />
                   
                   {/* Etiquetas de ejes */}
-                  <text x={(marginLeft + (graphWidth - marginRight)) / 2} y={290} textAnchor="middle" className="text-sm">Tiempo (segundos)</text>
+                  <text x={(marginLeft + (speedWidth - marginRight)) / 2} y={290} textAnchor="middle" className="text-sm">Tiempo (segundos)</text>
                   <text x="15" y="140" textAnchor="middle" transform="rotate(-90 15 140)" className="text-sm">
                     Velocidad (km/h)
                   </text>
@@ -743,14 +771,14 @@ const IntegralOdometro = () => {
                   {[0, 2, 4, 6, 8, 10].map(t => (
                     <g key={t}>
                       <line
-                        x1={marginLeft + t * scaleX}
+                        x1={marginLeft + t * scaleXSpeed}
                         y1="260"
-                        x2={marginLeft + t * scaleX}
+                        x2={marginLeft + t * scaleXSpeed}
                         y2="265"
                         stroke="black"
                       />
                       <text
-                        x={marginLeft + t * scaleX}
+                        x={marginLeft + t * scaleXSpeed}
                         y="280"
                         textAnchor="middle"
                         className="text-xs"
@@ -786,7 +814,7 @@ const IntegralOdometro = () => {
                     d={Array.from({ length: 101 }, (_, i) => {
                       const t = i * 0.1;
                       const v = velocidadKmH(t);
-                      const x = marginLeft + t * scaleX;
+                      const x = marginLeft + t * scaleXSpeed;
                       const y = 260 - v * scaleY;
                       return i === 0 ? `M ${x} ${y}` : `L ${x} ${y}`;
                     }).join(' ')}
@@ -799,9 +827,9 @@ const IntegralOdometro = () => {
                   {rectangulos.map((rect, i) => (
                     <rect
                       key={i}
-                      x={marginLeft + rect.t * scaleX}
+                      x={marginLeft + rect.t * scaleXSpeed}
                       y={260 - rect.v * scaleY}
-                      width={rect.dt * scaleX}
+                      width={rect.dt * scaleXSpeed}
                       height={rect.v * scaleY}
                       fill="rgba(59, 130, 246, 0.3)"
                       stroke="blue"
@@ -812,7 +840,7 @@ const IntegralOdometro = () => {
                   {/* Punto actual */}
                   {time > 0 && (
                     <circle
-                      cx={marginLeft + time * scaleX}
+                      cx={marginLeft + time * scaleXSpeed}
                       cy={260 - velocidadKmH(time) * scaleY}
                       r="5"
                       fill="red"
@@ -933,15 +961,15 @@ const IntegralOdometro = () => {
               </div>
               
               {/* Gráfico de Fuel Rate */}
-              <div className="bg-white p-6 rounded-lg border">
+              <div ref={fuelRef} className="bg-white p-6 rounded-lg border">
                 <h3 className="font-bold mb-4">Gráfico Fuel Rate vs Tiempo</h3>
-                <svg width={graphWidth} height={graphHeight} className="border">
+                <svg width={fuelWidth} height={graphHeight} className="border">
                   {/* Ejes */}
                   <line x1={marginLeft} y1={20} x2={marginLeft} y2={260} stroke="black" strokeWidth="2" />
-                  <line x1={marginLeft} y1={260} x2={graphWidth - marginRight} y2={260} stroke="black" strokeWidth="2" />
+                  <line x1={marginLeft} y1={260} x2={fuelWidth - marginRight} y2={260} stroke="black" strokeWidth="2" />
                   
                   {/* Etiquetas de ejes */}
-                  <text x={(marginLeft + (graphWidth - marginRight)) / 2} y={290} textAnchor="middle" className="text-sm">Tiempo (segundos)</text>
+                  <text x={(marginLeft + (fuelWidth - marginRight)) / 2} y={290} textAnchor="middle" className="text-sm">Tiempo (segundos)</text>
                   <text x="15" y="140" textAnchor="middle" transform="rotate(-90 15 140)" className="text-sm">
                     Fuel Rate (L/h)
                   </text>
@@ -950,14 +978,14 @@ const IntegralOdometro = () => {
                   {[0, 2, 4, 6, 8, 10].map(t => (
                     <g key={t}>
                       <line
-                        x1={marginLeft + t * scaleX}
+                        x1={marginLeft + t * scaleXFuel}
                         y1="260"
-                        x2={marginLeft + t * scaleX}
+                        x2={marginLeft + t * scaleXFuel}
                         y2="265"
                         stroke="black"
                       />
                       <text
-                        x={marginLeft + t * scaleX}
+                        x={marginLeft + t * scaleXFuel}
                         y="280"
                         textAnchor="middle"
                         className="text-xs"
@@ -993,7 +1021,7 @@ const IntegralOdometro = () => {
                     d={Array.from({ length: 101 }, (_, i) => {
                       const t = i * 0.1;
                       const fr = fuelRateLPorH(t);
-                      const x = marginLeft + t * scaleX;
+                      const x = marginLeft + t * scaleXFuel;
                       const y = 260 - fr * 12;
                       return i === 0 ? `M ${x} ${y}` : `L ${x} ${y}`;
                     }).join(' ')}
@@ -1006,9 +1034,9 @@ const IntegralOdometro = () => {
                   {rectangulosCombustible.map((rect, i) => (
                     <rect
                       key={i}
-                      x={marginLeft + rect.t * scaleX}
+                      x={marginLeft + rect.t * scaleXFuel}
                       y={260 - rect.v * 12}
-                      width={rect.dt * scaleX}
+                      width={rect.dt * scaleXFuel}
                       height={rect.v * 12}
                       fill="rgba(255, 140, 0, 0.3)"
                       stroke="orange"
@@ -1019,7 +1047,7 @@ const IntegralOdometro = () => {
                   {/* Punto actual */}
                   {time > 0 && (
                     <circle
-                      cx={marginLeft + time * scaleX}
+                      cx={marginLeft + time * scaleXFuel}
                       cy={260 - fuelRateLPorH(time) * 12}
                       r="5"
                       fill="red"
