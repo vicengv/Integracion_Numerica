@@ -259,6 +259,11 @@ export default function VisualizadorSimplificado() {
     if (elSpeed) elSpeed.textContent = `${speedV.toFixed(1)} km/h`;
     if (elDistance) elDistance.textContent = `${deltaDist.toFixed(3)} km`;
 
+    // Actualizar Fuel Rate (L/h) en panel de valores actuales
+    const elFuelRate = document.getElementById('currentFuelRate');
+    const fuelRateNow = Number(row['Engine Fuel Rate (l/h)'] || 0);
+    if (elFuelRate) elFuelRate.textContent = `${fuelRateNow.toFixed(1)} L/h`;
+    
     const elSensor = document.getElementById('sensorFuel');
     const elCalc = document.getElementById('calculatedFuel');
     if (elSensor) elSensor.textContent = `${(sensorFuel - (csvData[0]['Engine Total Fuel Used (l)']||0)).toFixed(4)} L`;

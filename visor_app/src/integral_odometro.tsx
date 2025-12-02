@@ -74,11 +74,13 @@ const IntegralOdometro = () => {
     setRectangulosCombustible([]);
   };
 
-  // Calcular escala para el gráfico
-  const scaleX = 48; // píxeles por segundo
-  const scaleY = 4; // píxeles por km/h
+  // Calcular geometría del gráfico
+  const marginLeft = 50;
+  const marginRight = 20;
   const graphHeight = 300;
-  const graphWidth = 520;
+  const graphWidth = 720;
+  const scaleX = (graphWidth - marginLeft - marginRight) / maxTime; // píxeles por segundo
+  const scaleY = 4; // píxeles por km/h
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -728,11 +730,11 @@ const IntegralOdometro = () => {
                 <h3 className="font-bold mb-4">Gráfico Velocidad vs Tiempo</h3>
                 <svg width={graphWidth} height={graphHeight} className="border">
                   {/* Ejes */}
-                  <line x1="50" y1="20" x2="50" y2="260" stroke="black" strokeWidth="2" />
-                  <line x1="50" y1="260" x2="500" y2="260" stroke="black" strokeWidth="2" />
+                  <line x1={marginLeft} y1={20} x2={marginLeft} y2={260} stroke="black" strokeWidth="2" />
+                  <line x1={marginLeft} y1={260} x2={graphWidth - marginRight} y2={260} stroke="black" strokeWidth="2" />
                   
                   {/* Etiquetas de ejes */}
-                  <text x="275" y="290" textAnchor="middle" className="text-sm">Tiempo (segundos)</text>
+                  <text x={(marginLeft + (graphWidth - marginRight)) / 2} y={290} textAnchor="middle" className="text-sm">Tiempo (segundos)</text>
                   <text x="15" y="140" textAnchor="middle" transform="rotate(-90 15 140)" className="text-sm">
                     Velocidad (km/h)
                   </text>
@@ -740,17 +742,17 @@ const IntegralOdometro = () => {
                   {/* Marcas en eje X */}
                   {[0, 2, 4, 6, 8, 10].map(t => (
                     <g key={t}>
-                      <line 
-                        x1={50 + t * scaleX} 
-                        y1="260" 
-                        x2={50 + t * scaleX} 
-                        y2="265" 
-                        stroke="black" 
+                      <line
+                        x1={marginLeft + t * scaleX}
+                        y1="260"
+                        x2={marginLeft + t * scaleX}
+                        y2="265"
+                        stroke="black"
                       />
-                      <text 
-                        x={50 + t * scaleX} 
-                        y="280" 
-                        textAnchor="middle" 
+                      <text
+                        x={marginLeft + t * scaleX}
+                        y="280"
+                        textAnchor="middle"
                         className="text-xs"
                       >
                         {t}
@@ -761,17 +763,17 @@ const IntegralOdometro = () => {
                   {/* Marcas en eje Y */}
                   {[0, 10, 20, 30, 40, 50].map(v => (
                     <g key={v}>
-                      <line 
-                        x1="45" 
-                        y1={260 - v * scaleY} 
-                        x2="50" 
-                        y2={260 - v * scaleY} 
-                        stroke="black" 
+                      <line
+                        x1={marginLeft - 5}
+                        y1={260 - v * scaleY}
+                        x2={marginLeft}
+                        y2={260 - v * scaleY}
+                        stroke="black"
                       />
-                      <text 
-                        x="40" 
-                        y={265 - v * scaleY} 
-                        textAnchor="end" 
+                      <text
+                        x={marginLeft - 10}
+                        y={265 - v * scaleY}
+                        textAnchor="end"
                         className="text-xs"
                       >
                         {v}
@@ -784,7 +786,7 @@ const IntegralOdometro = () => {
                     d={Array.from({ length: 101 }, (_, i) => {
                       const t = i * 0.1;
                       const v = velocidadKmH(t);
-                      const x = 50 + t * scaleX;
+                      const x = marginLeft + t * scaleX;
                       const y = 260 - v * scaleY;
                       return i === 0 ? `M ${x} ${y}` : `L ${x} ${y}`;
                     }).join(' ')}
@@ -797,7 +799,7 @@ const IntegralOdometro = () => {
                   {rectangulos.map((rect, i) => (
                     <rect
                       key={i}
-                      x={50 + rect.t * scaleX}
+                      x={marginLeft + rect.t * scaleX}
                       y={260 - rect.v * scaleY}
                       width={rect.dt * scaleX}
                       height={rect.v * scaleY}
@@ -810,7 +812,7 @@ const IntegralOdometro = () => {
                   {/* Punto actual */}
                   {time > 0 && (
                     <circle
-                      cx={50 + time * scaleX}
+                      cx={marginLeft + time * scaleX}
                       cy={260 - velocidadKmH(time) * scaleY}
                       r="5"
                       fill="red"
@@ -935,11 +937,11 @@ const IntegralOdometro = () => {
                 <h3 className="font-bold mb-4">Gráfico Fuel Rate vs Tiempo</h3>
                 <svg width={graphWidth} height={graphHeight} className="border">
                   {/* Ejes */}
-                  <line x1="50" y1="20" x2="50" y2="260" stroke="black" strokeWidth="2" />
-                  <line x1="50" y1="260" x2="500" y2="260" stroke="black" strokeWidth="2" />
+                  <line x1={marginLeft} y1={20} x2={marginLeft} y2={260} stroke="black" strokeWidth="2" />
+                  <line x1={marginLeft} y1={260} x2={graphWidth - marginRight} y2={260} stroke="black" strokeWidth="2" />
                   
                   {/* Etiquetas de ejes */}
-                  <text x="275" y="290" textAnchor="middle" className="text-sm">Tiempo (segundos)</text>
+                  <text x={(marginLeft + (graphWidth - marginRight)) / 2} y={290} textAnchor="middle" className="text-sm">Tiempo (segundos)</text>
                   <text x="15" y="140" textAnchor="middle" transform="rotate(-90 15 140)" className="text-sm">
                     Fuel Rate (L/h)
                   </text>
@@ -947,17 +949,17 @@ const IntegralOdometro = () => {
                   {/* Marcas en eje X */}
                   {[0, 2, 4, 6, 8, 10].map(t => (
                     <g key={t}>
-                      <line 
-                        x1={50 + t * scaleX} 
-                        y1="260" 
-                        x2={50 + t * scaleX} 
-                        y2="265" 
-                        stroke="black" 
+                      <line
+                        x1={marginLeft + t * scaleX}
+                        y1="260"
+                        x2={marginLeft + t * scaleX}
+                        y2="265"
+                        stroke="black"
                       />
-                      <text 
-                        x={50 + t * scaleX} 
-                        y="280" 
-                        textAnchor="middle" 
+                      <text
+                        x={marginLeft + t * scaleX}
+                        y="280"
+                        textAnchor="middle"
                         className="text-xs"
                       >
                         {t}
@@ -968,17 +970,17 @@ const IntegralOdometro = () => {
                   {/* Marcas en eje Y - ajustadas para fuel rate */}
                   {[0, 5, 10, 15, 20].map(v => (
                     <g key={v}>
-                      <line 
-                        x1="45" 
-                        y1={260 - v * 12} 
-                        x2="50" 
-                        y2={260 - v * 12} 
-                        stroke="black" 
+                      <line
+                        x1={marginLeft - 5}
+                        y1={260 - v * 12}
+                        x2={marginLeft}
+                        y2={260 - v * 12}
+                        stroke="black"
                       />
-                      <text 
-                        x="40" 
-                        y={265 - v * 12} 
-                        textAnchor="end" 
+                      <text
+                        x={marginLeft - 10}
+                        y={265 - v * 12}
+                        textAnchor="end"
                         className="text-xs"
                       >
                         {v}
@@ -991,7 +993,7 @@ const IntegralOdometro = () => {
                     d={Array.from({ length: 101 }, (_, i) => {
                       const t = i * 0.1;
                       const fr = fuelRateLPorH(t);
-                      const x = 50 + t * scaleX;
+                      const x = marginLeft + t * scaleX;
                       const y = 260 - fr * 12;
                       return i === 0 ? `M ${x} ${y}` : `L ${x} ${y}`;
                     }).join(' ')}
@@ -1004,7 +1006,7 @@ const IntegralOdometro = () => {
                   {rectangulosCombustible.map((rect, i) => (
                     <rect
                       key={i}
-                      x={50 + rect.t * scaleX}
+                      x={marginLeft + rect.t * scaleX}
                       y={260 - rect.v * 12}
                       width={rect.dt * scaleX}
                       height={rect.v * 12}
@@ -1017,7 +1019,7 @@ const IntegralOdometro = () => {
                   {/* Punto actual */}
                   {time > 0 && (
                     <circle
-                      cx={50 + time * scaleX}
+                      cx={marginLeft + time * scaleX}
                       cy={260 - fuelRateLPorH(time) * 12}
                       r="5"
                       fill="red"
