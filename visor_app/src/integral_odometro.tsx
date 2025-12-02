@@ -76,7 +76,7 @@ const IntegralOdometro = () => {
 
   // Calcular geometría del gráfico (responsivo al ancho del contenedor)
   const marginLeft = 50;
-  const marginRight = 0;
+  const marginRight = 30;
   const graphHeight = 300;
 
   // Refs para medir el ancho disponible de cada contenedor de gráfico
@@ -108,7 +108,7 @@ const IntegralOdometro = () => {
       window.removeEventListener('resize', update);
       if (ro) ro.disconnect();
     };
-  }, []);
+  }, [tab]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -143,7 +143,7 @@ const IntegralOdometro = () => {
                   className={`px-5 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 flex items-center gap-2 ${isActive
                     ? 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-lg'
                     : 'text-gray-600 hover:bg-gray-100'
-                  }`}
+                    }`}
                 >
                   <span className="text-xl">{item.icon}</span>
                   <span className="hidden sm:inline">{item.label}</span>
@@ -762,13 +762,13 @@ const IntegralOdometro = () => {
                   {/* Ejes */}
                   <line x1={marginLeft} y1={20} x2={marginLeft} y2={260} stroke="black" strokeWidth="2" />
                   <line x1={marginLeft} y1={260} x2={speedWidth - marginRight} y2={260} stroke="black" strokeWidth="2" />
-                  
+
                   {/* Etiquetas de ejes */}
                   <text x={(marginLeft + (speedWidth - marginRight)) / 2} y={290} textAnchor="middle" className="text-sm">Tiempo (segundos)</text>
                   <text x="15" y="140" textAnchor="middle" transform="rotate(-90 15 140)" className="text-sm">
                     Velocidad (km/h)
                   </text>
-                  
+
                   {/* Marcas en eje X */}
                   {[0, 2, 4, 6, 8, 10].map(t => (
                     <g key={t}>
@@ -789,7 +789,7 @@ const IntegralOdometro = () => {
                       </text>
                     </g>
                   ))}
-                  
+
                   {/* Marcas en eje Y */}
                   {[0, 10, 20, 30, 40, 50].map(v => (
                     <g key={v}>
@@ -810,7 +810,7 @@ const IntegralOdometro = () => {
                       </text>
                     </g>
                   ))}
-                  
+
                   {/* Curva de velocidad teórica */}
                   <path
                     d={Array.from({ length: 101 }, (_, i) => {
@@ -824,7 +824,7 @@ const IntegralOdometro = () => {
                     strokeWidth="2"
                     fill="none"
                   />
-                  
+
                   {/* Rectángulos (integración numérica) */}
                   {rectangulos.map((rect, i) => (
                     <rect
@@ -838,7 +838,7 @@ const IntegralOdometro = () => {
                       strokeWidth="1"
                     />
                   ))}
-                  
+
                   {/* Punto actual */}
                   {time > 0 && (
                     <circle
@@ -849,17 +849,17 @@ const IntegralOdometro = () => {
                     />
                   )}
                 </svg>
-                
+
                 <div className="px-6 pb-6">
                   <div className="mt-4 p-4 bg-blue-50 rounded">
-                  <p className="text-sm">
-                    <strong>Los rectángulos azules</strong> representan (v × Δt). 
-                    El área total de todos los rectángulos = distancia total recorrida = {odometro.toFixed(4)} km
-                  </p>
-                </div>
+                    <p className="text-sm">
+                      <strong>Los rectángulos azules</strong> representan (v × Δt).
+                      El área total de todos los rectángulos = distancia total recorrida = {odometro.toFixed(4)} km
+                    </p>
+                  </div>
                 </div>
               </div>
-              
+
               {/* Fórmula en acción */}
               {time > 0 && (
                 <div className="mt-6 p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
@@ -886,7 +886,7 @@ const IntegralOdometro = () => {
             </div>
           </div>
         )}
-        
+
         {/* Contenido de Combustible */}
         {tab === 'combustible' && (
           <div className="space-y-6">
@@ -894,7 +894,7 @@ const IntegralOdometro = () => {
               <h2 className="text-2xl font-bold mb-4 text-gray-800">
                 Ejemplo 2: Calculando el Consumo de Combustible
               </h2>
-              
+
               <div className="bg-gradient-to-r from-orange-100 to-red-100 p-5 rounded-lg mb-6">
                 <h3 className="font-bold text-lg mb-3 text-orange-900">🚌 Contexto del Problema</h3>
                 <div className="bg-white p-4 rounded space-y-2">
@@ -904,7 +904,7 @@ const IntegralOdometro = () => {
                   <p><strong>Frecuencia de muestreo:</strong> Cada 100 milisegundos</p>
                 </div>
               </div>
-              
+
               {/* Controles */}
               <div className="flex gap-4 mb-6">
                 <button
@@ -923,7 +923,7 @@ const IntegralOdometro = () => {
                   Reiniciar
                 </button>
               </div>
-              
+
               {/* Valores actuales */}
               <div className="grid grid-cols-4 gap-4 mb-6">
                 <div className="bg-white p-4 rounded-lg border-2 border-blue-200">
@@ -963,7 +963,7 @@ const IntegralOdometro = () => {
                   </p>
                 </div>
               </div>
-              
+
               {/* Gráfico de Fuel Rate */}
               <div ref={fuelRef} className="bg-white rounded-lg border overflow-hidden p-0">
                 <div className="px-6 pt-6">
@@ -973,13 +973,13 @@ const IntegralOdometro = () => {
                   {/* Ejes */}
                   <line x1={marginLeft} y1={20} x2={marginLeft} y2={260} stroke="black" strokeWidth="2" />
                   <line x1={marginLeft} y1={260} x2={fuelWidth - marginRight} y2={260} stroke="black" strokeWidth="2" />
-                  
+
                   {/* Etiquetas de ejes */}
                   <text x={(marginLeft + (fuelWidth - marginRight)) / 2} y={290} textAnchor="middle" className="text-sm">Tiempo (segundos)</text>
                   <text x="15" y="140" textAnchor="middle" transform="rotate(-90 15 140)" className="text-sm">
                     Fuel Rate (L/h)
                   </text>
-                  
+
                   {/* Marcas en eje X */}
                   {[0, 2, 4, 6, 8, 10].map(t => (
                     <g key={t}>
@@ -1000,7 +1000,7 @@ const IntegralOdometro = () => {
                       </text>
                     </g>
                   ))}
-                  
+
                   {/* Marcas en eje Y - ajustadas para fuel rate */}
                   {[0, 5, 10, 15, 20].map(v => (
                     <g key={v}>
@@ -1021,7 +1021,7 @@ const IntegralOdometro = () => {
                       </text>
                     </g>
                   ))}
-                  
+
                   {/* Curva de fuel rate teórica */}
                   <path
                     d={Array.from({ length: 101 }, (_, i) => {
@@ -1035,7 +1035,7 @@ const IntegralOdometro = () => {
                     strokeWidth="2"
                     fill="none"
                   />
-                  
+
                   {/* Rectángulos (integración numérica) */}
                   {rectangulosCombustible.map((rect, i) => (
                     <rect
@@ -1049,7 +1049,7 @@ const IntegralOdometro = () => {
                       strokeWidth="1"
                     />
                   ))}
-                  
+
                   {/* Punto actual */}
                   {time > 0 && (
                     <circle
@@ -1060,14 +1060,14 @@ const IntegralOdometro = () => {
                     />
                   )}
                 </svg>
-                
+
                 <div className="px-6 pb-6">
                   <div className="mt-4 p-4 bg-orange-50 rounded">
-                  <p className="text-sm">
-                    <strong>Los rectángulos naranjas</strong> representan (Fuel Rate × Δt). 
-                    El área total = litros totales consumidos = {litrosConsumidos.toFixed(6)} L
-                  </p>
-                </div>
+                    <p className="text-sm">
+                      <strong>Los rectángulos naranjas</strong> representan (Fuel Rate × Δt).
+                      El área total = litros totales consumidos = {litrosConsumidos.toFixed(6)} L
+                    </p>
+                  </div>
                 </div>
               </div>
 
@@ -1119,7 +1119,7 @@ const IntegralOdometro = () => {
               {/* Fórmula matemática */}
               <div className="mt-6 bg-gradient-to-r from-orange-100 to-red-100 p-5 rounded-lg">
                 <h3 className="font-bold text-lg mb-3 text-orange-900">📐 Fórmula Matemática</h3>
-                
+
                 <div className="bg-white p-4 rounded mb-4">
                   <p className="text-center text-sm text-gray-600 mb-2">Litros consumidos:</p>
                   <p className="text-center text-2xl font-bold text-orange-800">
@@ -1152,7 +1152,7 @@ const IntegralOdometro = () => {
               <h2 className="text-2xl font-bold mb-4 text-gray-800">
                 Ejemplo 3: Calculando el Rendimiento (km/L)
               </h2>
-              
+
               <div className="bg-gradient-to-r from-green-100 to-emerald-100 p-5 rounded-lg mb-6">
                 <h3 className="font-bold text-lg mb-3 text-green-900">🎯 Objetivo</h3>
                 <div className="bg-white p-4 rounded space-y-2">
@@ -1205,7 +1205,7 @@ const IntegralOdometro = () => {
               {/* Regla de 3 explicada */}
               <div className="bg-gradient-to-r from-purple-100 to-pink-100 p-6 rounded-lg mb-6">
                 <h3 className="font-bold text-xl mb-4 text-purple-900">📐 Regla de 3 Simple</h3>
-                
+
                 <div className="bg-white p-5 rounded-lg mb-4">
                   <p className="font-semibold mb-3 text-gray-800">Planteamiento:</p>
                   <div className="space-y-3 text-lg">
@@ -1218,7 +1218,7 @@ const IntegralOdometro = () => {
                         <span className="font-bold text-blue-700">{odometro.toFixed(4)} km</span>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center justify-center gap-4">
                       <div className="bg-green-100 px-4 py-2 rounded">
                         <span className="font-bold text-green-700">1 L</span>
@@ -1273,7 +1273,7 @@ const IntegralOdometro = () => {
               {/* Fórmula general */}
               <div className="bg-white p-6 rounded-lg shadow-lg mb-6">
                 <h3 className="font-bold text-lg mb-4 text-gray-800">📖 Fórmula General</h3>
-                
+
                 <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-5 rounded-lg border-2 border-blue-200">
                   <p className="text-center text-sm text-gray-600 mb-3">Rendimiento (km/L) se calcula como:</p>
                   <p className="text-center text-3xl font-bold text-blue-900 mb-4">
@@ -1314,7 +1314,7 @@ const IntegralOdometro = () => {
                       <p className="text-sm text-gray-700">Integramos <strong>velocidad</strong> → obtenemos <strong>km recorridos</strong></p>
                     </div>
                   </div>
-                  
+
                   <div className="bg-white p-4 rounded flex items-start gap-3">
                     <span className="text-2xl">2️⃣</span>
                     <div>
@@ -1322,7 +1322,7 @@ const IntegralOdometro = () => {
                       <p className="text-sm text-gray-700">Integramos <strong>fuel rate</strong> → obtenemos <strong>litros consumidos</strong></p>
                     </div>
                   </div>
-                  
+
                   <div className="bg-white p-4 rounded flex items-start gap-3">
                     <span className="text-2xl">3️⃣</span>
                     <div>
@@ -1331,11 +1331,11 @@ const IntegralOdometro = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="mt-4 bg-white p-4 rounded">
                   <p className="font-semibold text-gray-800 mb-2">✨ La magia:</p>
                   <p className="text-sm text-gray-700">
-                    Usando solo <strong>integración numérica</strong> en dos variables diferentes (velocidad y fuel rate), 
+                    Usando solo <strong>integración numérica</strong> en dos variables diferentes (velocidad y fuel rate),
                     podemos calcular una tercera variable derivada (rendimiento) usando álgebra simple.
                   </p>
                 </div>
