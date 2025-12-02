@@ -76,7 +76,7 @@ const IntegralOdometro = () => {
 
   // Calcular geometría del gráfico (responsivo al ancho del contenedor)
   const marginLeft = 50;
-  const marginRight = 20;
+  const marginRight = 0;
   const graphHeight = 300;
 
   // Refs para medir el ancho disponible de cada contenedor de gráfico
@@ -754,8 +754,10 @@ const IntegralOdometro = () => {
               </div>
 
               {/* Gráfico */}
-              <div ref={speedRef} className="bg-white p-6 rounded-lg border">
-                <h3 className="font-bold mb-4">Gráfico Velocidad vs Tiempo</h3>
+              <div ref={speedRef} className="bg-white rounded-lg border overflow-hidden p-0">
+                <div className="px-6 pt-6">
+                  <h3 className="font-bold mb-4">Gráfico Velocidad vs Tiempo</h3>
+                </div>
                 <svg width={speedWidth} height={graphHeight} className="border">
                   {/* Ejes */}
                   <line x1={marginLeft} y1={20} x2={marginLeft} y2={260} stroke="black" strokeWidth="2" />
@@ -848,11 +850,13 @@ const IntegralOdometro = () => {
                   )}
                 </svg>
                 
-                <div className="mt-4 p-4 bg-blue-50 rounded">
+                <div className="px-6 pb-6">
+                  <div className="mt-4 p-4 bg-blue-50 rounded">
                   <p className="text-sm">
                     <strong>Los rectángulos azules</strong> representan (v × Δt). 
                     El área total de todos los rectángulos = distancia total recorrida = {odometro.toFixed(4)} km
                   </p>
+                </div>
                 </div>
               </div>
               
@@ -961,8 +965,10 @@ const IntegralOdometro = () => {
               </div>
               
               {/* Gráfico de Fuel Rate */}
-              <div ref={fuelRef} className="bg-white p-6 rounded-lg border">
-                <h3 className="font-bold mb-4">Gráfico Fuel Rate vs Tiempo</h3>
+              <div ref={fuelRef} className="bg-white rounded-lg border overflow-hidden p-0">
+                <div className="px-6 pt-6">
+                  <h3 className="font-bold mb-4">Gráfico Fuel Rate vs Tiempo</h3>
+                </div>
                 <svg width={fuelWidth} height={graphHeight} className="border">
                   {/* Ejes */}
                   <line x1={marginLeft} y1={20} x2={marginLeft} y2={260} stroke="black" strokeWidth="2" />
@@ -1055,11 +1061,13 @@ const IntegralOdometro = () => {
                   )}
                 </svg>
                 
-                <div className="mt-4 p-4 bg-orange-50 rounded">
+                <div className="px-6 pb-6">
+                  <div className="mt-4 p-4 bg-orange-50 rounded">
                   <p className="text-sm">
                     <strong>Los rectángulos naranjas</strong> representan (Fuel Rate × Δt). 
                     El área total = litros totales consumidos = {litrosConsumidos.toFixed(6)} L
                   </p>
+                </div>
                 </div>
               </div>
 
