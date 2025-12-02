@@ -1,0 +1,142 @@
+<![CDATA[<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Integración Numérica - Versión Estática Completa</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="container">
+  <header class="site-header">
+    <h1>Integración Numérica en Sistemas Automotrices</h1>
+    <p class="lead">Versión estática completa — contenido educativo y simulaciones</p>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="fundamentos">Fundamentos</button>
+    <button class="tab-btn" data-tab="unidades">Unidades</button>
+    <button class="tab-btn" data-tab="teoria">Teoría</button>
+    <button class="tab-btn" data-tab="simulacion">Ejemplo: Distancia</button>
+    <button class="tab-btn" data-tab="combustible">Ejemplo: Combustible</button>
+    <button class="tab-btn" data-tab="rendimiento">Rendimiento</button>
+    <button class="tab-btn" data-tab="aplicacion">Escenario Real</button>
+  </nav>
+
+  <!-- Fundamentos -->
+  <section id="fundamentos" class="tab-content active">
+    <h2>Fundamentos: Explicado de Forma Simple</h2>
+
+    <div class="card">
+      <h3>¿Qué es una Derivada?</h3>
+      <p>La derivada indica la rapidez de cambio. Ejemplo: velocidad = derivada de posición.</p>
+    </div>
+
+    <div class="card">
+      <h3>¿Qué es una Integral?</h3>
+      <p>La integral acumula cantidad: distancia = integral de velocidad en el tiempo.</p>
+    </div>
+
+    <div class="card">
+      <h3>Sumas de Riemann</h3>
+      <p>Aproximación mediante rectángulos. Cada rectángulo representa v<sub>i</sub> × Δt.</p>
+    </div>
+  </section>
+
+  <!-- Unidades -->
+  <section id="unidades" class="tab-content">
+    <h2>Unidades y Conversión</h2>
+    <div class="card">
+      <p>La velocidad del sensor viene en <strong>km/h</strong> y el muestreo en <strong>segundos</strong>. Conviene convertir
+      km/h → km/s (÷3600) o convertir Δt a horas. Ambas opciones son equivalentes; la práctica suele convertir la velocidad.</p>
+    </div>
+  </section>
+
+  <!-- Teoria -->
+  <section id="teoria" class="tab-content">
+    <h2>Fundamento Matemático</h2>
+    <div class="card">
+      <p><strong>Relación fundamental:</strong></p>
+      <p>s(t) = s₀ + ∫₀ᵗ v(τ) dτ</p>
+      <p>En la práctica, con muestras discretas: s ≈ Σ v<sub>i</sub> × Δt</p>
+    </div>
+  </section>
+
+  <!-- Simulacion Distancia -->
+  <section id="simulacion" class="tab-content">
+    <h2>Ejemplo 1: Calculando la Distancia (Odómetro)</h2>
+
+    <div class="controls">
+      <button id="playDist">Iniciar</button>
+      <button id="resetDist">Reiniciar</button>
+    </div>
+
+    <div class="stats">
+      <div><strong>Tiempo:</strong> <span id="sim-time">0.0 s</span></div>
+      <div><strong>Velocidad:</strong> <span id="sim-speed">0.0 km/h</span></div>
+      <div><strong>Odómetro:</strong> <span id="sim-odo">0.000 km</span></div>
+    </div>
+
+    <div class="chart-wrap">
+      <svg id="sim-chart" width="800" height="280" viewBox="0 0 600 300" role="img" aria-label="Gráfico Velocidad vs Tiempo">
+        <line x1="50" y1="20" x2="50" y2="260" stroke="black" stroke-width="2"/>
+        <line x1="50" y1="260" x2="550" y2="260" stroke="black" stroke-width="2"/>
+        <path id="sim-theory" d="" stroke="lightblue" stroke-width="2" fill="none"/>
+        <g id="sim-rects" />
+        <circle id="sim-point" cx="50" cy="260" r="5" fill="red"/>
+      </svg>
+    </div>
+
+    <pre id="sim-code" class="code-box">// Código de simulación (actualiza en tiempo real)</pre>
+  </section>
+
+  <!-- Combustible -->
+  <section id="combustible" class="tab-content">
+    <h2>Ejemplo 2: Consumo de Combustible</h2>
+
+    <div class="controls">
+      <button id="playFuel">Iniciar</button>
+      <button id="resetFuel">Reiniciar</button>
+    </div>
+
+    <div class="stats">
+      <div><strong>Tiempo:</strong> <span id="fuel-time">0.0 s</span></div>
+      <div><strong>Fuel Rate:</strong> <span id="fuel-rate">0.00 L/h</span></div>
+      <div><strong>Litros:</strong> <span id="fuel-liters">0.000000 L</span></div>
+    </div>
+
+    <div class="chart-wrap">
+      <svg id="fuel-chart" width="800" height="280" viewBox="0 0 600 300" role="img" aria-label="Gráfico Fuel Rate vs Tiempo">
+        <line x1="50" y1="20" x2="50" y2="260" stroke="black" stroke-width="2"/>
+        <line x1="50" y1="260" x2="550" y2="260" stroke="black" stroke-width="2"/>
+        <path id="fuel-theory" d="" stroke="lightsalmon" stroke-width="2" fill="none"/>
+        <g id="fuel-rects" />
+        <circle id="fuel-point" cx="50" cy="260" r="5" fill="red"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- Rendimiento -->
+  <section id="rendimiento" class="tab-content">
+    <h2>Ejemplo 3: Rendimiento (km/L)</h2>
+    <div class="perf">
+      <div><strong>Distancia total:</strong> <span id="total-dist">0.000 km</span></div>
+      <div><strong>Litros totales:</strong> <span id="total-liters">0.000000 L</span></div>
+      <div><strong>Rendimiento:</strong> <span id="perf-result">0.00 km/L</span></div>
+    </div>
+    <p>Fórmula: <strong>Rendimiento = Distancia ÷ Litros</strong>. Se usa el resultado final de las simulaciones.</p>
+  </section>
+
+  <!-- Aplicacion -->
+  <section id="aplicacion" class="tab-content">
+    <h2>Aplicación en Escenario Real</h2>
+    <p>Visualizador de datos reales (archivo embebido).</p>
+    <div class="iframe-wrap">
+      <iframe src="../visualizador_simplificado.html" style="width:100%;height:900px;border:1px solid #ddd;border-radius:8px;"></iframe>
+    </div>
+  </section>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>]]>

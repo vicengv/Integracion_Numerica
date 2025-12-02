@@ -1,0 +1,755 @@
+export const visualizadorHtml = `<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualizador Combustible</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="container mx-auto p-4 max-w-7xl">
+        <h1 class="text-3xl font-bold text-center mb-6 text-gray-800">
+            Análisis de Combustible - Integración Numérica
+        </h1>
+
+        <!-- Carga de archivo -->
+        <div class="bg-white rounded-lg shadow p-4 mb-4">
+            <div class="flex items-center gap-4">
+                <input 
+                    type="file" 
+                    id="csvFile" 
+                    accept=".csv"
+                    class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+                />
+                <button 
+                    id="loadBtn"
+                    class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold whitespace-nowrap"
+                >
+                    Cargar
+                </button>
+            </div>
+            <div id="fileInfo" class="mt-2 text-sm text-gray-600"></div>
+        </div>
+
+        <!-- Controles -->
+        <div id="controls" class="bg-white rounded-lg shadow p-4 mb-4 hidden">
+            <div class="flex items-center gap-3 mb-3 flex-wrap">
+                <button id="playBtn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold flex items-center gap-2">
+                    <span>▶</span> Play
+                </button>
+                <button id="pauseBtn" class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors font-semibold flex items-center gap-2 hidden">
+                    <span>⏸</span> Pausa
+                </button>
+                <button id="resetBtn" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-semibold flex items-center gap-2">
+                    <span>🔄</span> Reset
+                </button>
+                <select id="speedSelect" class="px-4 py-2 border rounded-lg">
+                    <option value="1">1x</option>
+                    <option value="10" selected>10x</option>
+                    <option value="50">50x</option>
+                    <option value="100">100x</option>
+                    <option value="500">500x</option>
+                </select>
+            </div>
+            
+            <input 
+                type="range" 
+                id="timeSlider" 
+                min="0" 
+                max="100" 
+                value="0" 
+                class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600 mb-2"
+            />
+            <div class="text-sm text-gray-600 text-center">
+                <span id="progressText">0.0 s / 0.0 s (0%)</span>
+            </div>
+        </div>
+
+        <!-- Valores principales -->
+        <div id="currentValues" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4 hidden">
+            <div class="bg-white rounded-lg shadow p-3 border-l-4 border-blue-500">
+                <div class="text-xs text-gray-500">Tiempo</div>
+                <div id="currentTime" class="text-xl font-bold text-blue-600">0.0 s</div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-3 border-l-4 border-green-500">
+                <div class="text-xs text-gray-500">Velocidad</div>
+                <div id="currentSpeed" class="text-xl font-bold text-green-600">0.0 km/h</div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-3 border-l-4 border-orange-500">
+                <div class="text-xs text-gray-500">Fuel Rate</div>
+                <div id="currentFuelRate" class="text-xl font-bold text-orange-600">0.0 L/h</div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-3 border-l-4 border-red-500">
+                <div class="text-xs text-gray-500">Distancia Δ</div>
+                <div id="currentDistance" class="text-xl font-bold text-red-600">0.0 km</div>
+            </div>
+        </div>
+
+        <!-- Comparación Combustible -->
+        <div id="fuelComparison" class="bg-white rounded-lg shadow p-4 mb-4 hidden">
+            <h3 class="text-lg font-bold mb-3 text-gray-800">Combustible Consumido (Δ desde inicio)</h3>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
+                <div class="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                    <div class="text-xs text-gray-600 mb-1">Sensor</div>
+                    <div id="sensorFuel" class="text-lg font-bold text-blue-700">0.0000 L</div>
+                </div>
+                <div class="bg-green-50 p-3 rounded-lg border border-green-200">
+                    <div class="text-xs text-gray-600 mb-1">Calculado</div>
+                    <div id="calculatedFuel" class="text-lg font-bold text-green-700">0.0000 L</div>
+                </div>
+                <div class="bg-purple-50 p-3 rounded-lg border border-purple-200">
+                    <div class="text-xs text-gray-600 mb-1">Diferencia</div>
+                    <div id="fuelDifference" class="text-lg font-bold text-purple-700">0.0000 L</div>
+                    <div id="fuelDifferencePercent" class="text-xs text-gray-500">(0.00%)</div>
+                </div>
+                <div class="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+                    <div class="text-xs text-gray-600 mb-1">Rendimiento</div>
+                    <div id="efficiencyCalculated" class="text-lg font-bold text-yellow-700">0.000000 km/L</div>
+                </div>
+            </div>
+            
+            <!-- Gráfica de comparación -->
+            <div class="mt-4">
+                <h4 class="text-sm font-semibold mb-2 text-gray-700">Comparación Visual: Sensor vs Calculado</h4>
+                <canvas id="fuelComparisonChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Gráficas -->
+        <div class="grid md:grid-cols-2 gap-4 mb-4">
+            <div id="chartContainer1" class="bg-white rounded-lg shadow p-4 hidden">
+                <h3 class="text-md font-bold mb-2 text-gray-700">Fuel Rate</h3>
+                <canvas id="fuelRateChart"></canvas>
+            </div>
+            <div id="chartContainer2" class="bg-white rounded-lg shadow p-4 hidden">
+                <h3 class="text-md font-bold mb-2 text-gray-700">Velocidad</h3>
+                <canvas id="speedChart"></canvas>
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-4 mb-4">
+            <div id="chartContainer3" class="bg-white rounded-lg shadow p-4 hidden">
+                <h3 class="text-md font-bold mb-2 text-gray-700">Combustible Δ</h3>
+                <canvas id="fuelAccumulatedChart"></canvas>
+            </div>
+            <div id="chartContainer4" class="bg-white rounded-lg shadow p-4 hidden">
+                <h3 class="text-md font-bold mb-2 text-gray-700">Distancia Δ</h3>
+                <canvas id="distanceChart"></canvas>
+            </div>
+        </div>
+
+        <div id="chartContainer5" class="bg-white rounded-lg shadow p-4 mb-4 hidden">
+            <h3 class="text-md font-bold mb-2 text-gray-700">Rendimiento Acumulado</h3>
+            <canvas id="efficiencyChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        let csvData = [];
+        let currentIndex = 0;
+        let isPlaying = false;
+        let animationInterval = null;
+        let isDraggingSlider = false;
+        
+        let fuelRateChart, speedChart, fuelAccumulatedChart, distanceChart, efficiencyChart, fuelComparisonChart;
+        
+        const maxPointsInChart = 100;
+
+        // Cargar CSV
+        document.getElementById('loadBtn').addEventListener('click', () => {
+            const fileInput = document.getElementById('csvFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Por favor selecciona un archivo CSV');
+                return;
+            }
+            
+            Papa.parse(file, {
+                header: true,
+                dynamicTyping: true,
+                skipEmptyLines: true,
+                complete: (results) => {
+                    csvData = results.data;
+                    
+                    document.getElementById('fileInfo').innerHTML = \`
+                        <div class="text-green-600 font-semibold">
+                            ✓ \${file.name} - \${csvData.length} registros
+                        </div>
+                    \`;
+                    
+                    const slider = document.getElementById('timeSlider');
+                    slider.max = csvData.length - 1;
+                    slider.value = 0;
+                    
+                    document.getElementById('controls').classList.remove('hidden');
+                    document.getElementById('currentValues').classList.remove('hidden');
+                    document.getElementById('fuelComparison').classList.remove('hidden');
+                    document.getElementById('chartContainer1').classList.remove('hidden');
+                    document.getElementById('chartContainer2').classList.remove('hidden');
+                    document.getElementById('chartContainer3').classList.remove('hidden');
+                    document.getElementById('chartContainer4').classList.remove('hidden');
+                    document.getElementById('chartContainer5').classList.remove('hidden');
+                    
+                    initCharts();
+                    resetSimulation();
+                }
+            });
+        });
+
+        // Slider
+        const timeSlider = document.getElementById('timeSlider');
+        
+        timeSlider.addEventListener('input', (e) => {
+            isDraggingSlider = true;
+            jumpToIndex(parseInt(e.target.value));
+        });
+
+        timeSlider.addEventListener('mousedown', () => {
+            if (isPlaying) pause();
+        });
+
+        timeSlider.addEventListener('mouseup', () => {
+            isDraggingSlider = false;
+        });
+
+        function jumpToIndex(index) {
+            currentIndex = index;
+            updateCurrentValues(csvData[currentIndex]);
+            updateChartsUpToIndex(currentIndex);
+            updateProgress();
+        }
+
+        // Inicializar gráficas
+        function initCharts() {
+            const commonOptions = {
+                responsive: true,
+                maintainAspectRatio: true,
+                animation: false,
+                plugins: { legend: { display: true } },
+                scales: {
+                    x: { 
+                        title: { display: true, text: 'Tiempo (s)' },
+                        grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                    }
+                }
+            };
+
+            const ctx1 = document.getElementById('fuelRateChart').getContext('2d');
+            fuelRateChart = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Fuel Rate (L/h)',
+                        data: [],
+                        borderColor: '#fb923c',
+                        backgroundColor: 'rgba(251, 146, 60, 0.2)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        pointRadius: 3,
+                        pointHoverRadius: 5,
+                        pointBackgroundColor: '#fb923c',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 1
+                    }]
+                },
+                options: {
+                    ...commonOptions,
+                    scales: {
+                        ...commonOptions.scales,
+                        y: { 
+                            title: { display: true, text: 'L/h' },
+                            beginAtZero: false,
+                            grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                        }
+                    }
+                }
+            });
+
+            const ctx2 = document.getElementById('speedChart').getContext('2d');
+            speedChart = new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Velocidad (km/h)',
+                        data: [],
+                        borderColor: '#22c55e',
+                        backgroundColor: 'rgba(34, 197, 94, 0.2)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        pointRadius: 3,
+                        pointHoverRadius: 5,
+                        pointBackgroundColor: '#22c55e',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 1
+                    }]
+                },
+                options: {
+                    ...commonOptions,
+                    scales: {
+                        ...commonOptions.scales,
+                        y: { 
+                            title: { display: true, text: 'km/h' },
+                            beginAtZero: false,
+                            grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                        }
+                    }
+                }
+            });
+
+            const ctx3 = document.getElementById('fuelAccumulatedChart').getContext('2d');
+            fuelAccumulatedChart = new Chart(ctx3, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'Sensor',
+                            data: [],
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                            borderWidth: 2,
+                            tension: 0,
+                            pointRadius: 3,
+                            pointHoverRadius: 5,
+                            pointBackgroundColor: '#3b82f6',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 1
+                        },
+                        {
+                            label: 'Calculado',
+                            data: [],
+                            borderColor: '#22c55e',
+                            backgroundColor: 'rgba(34, 197, 94, 0.2)',
+                            borderWidth: 2,
+                            tension: 0,
+                            borderDash: [5, 5],
+                            pointRadius: 3,
+                            pointHoverRadius: 5,
+                            pointBackgroundColor: '#22c55e',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 1,
+                            pointStyle: 'rect'
+                        }
+                    ]
+                },
+                options: {
+                    ...commonOptions,
+                    scales: {
+                        ...commonOptions.scales,
+                        y: { 
+                            title: { display: true, text: 'Litros' },
+                            grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                        }
+                    }
+                }
+            });
+
+            const ctx4 = document.getElementById('distanceChart').getContext('2d');
+            distanceChart = new Chart(ctx4, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Distancia (km)',
+                        data: [],
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                        borderWidth: 2,
+                        tension: 0,
+                        pointRadius: 3,
+                        pointHoverRadius: 5,
+                        pointBackgroundColor: '#ef4444',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 1
+                    }]
+                },
+                options: {
+                    ...commonOptions,
+                    scales: {
+                        ...commonOptions.scales,
+                        y: { 
+                            title: { display: true, text: 'km' },
+                            grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                        }
+                    }
+                }
+            });
+
+            const ctx5 = document.getElementById('efficiencyChart').getContext('2d');
+            efficiencyChart = new Chart(ctx5, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Rendimiento (km/L)',
+                        data: [],
+                        borderColor: '#a855f7',
+                        backgroundColor: 'rgba(168, 85, 247, 0.2)',
+                        borderWidth: 2,
+                        tension: 0,
+                        pointRadius: 3,
+                        pointHoverRadius: 5,
+                        pointBackgroundColor: '#a855f7',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 1
+                    }]
+                },
+                options: {
+                    ...commonOptions,
+                    scales: {
+                        ...commonOptions.scales,
+                        y: { 
+                            title: { display: true, text: 'km/L' },
+                            beginAtZero: true,
+                            grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                        }
+                    }
+                }
+            });
+
+            // Gráfica de comparación combustible
+            const ctx6 = document.getElementById('fuelComparisonChart').getContext('2d');
+            fuelComparisonChart = new Chart(ctx6, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'Sensor',
+                            data: [],
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                            borderWidth: 2,
+                            tension: 0,
+                            pointRadius: 3,
+                            pointHoverRadius: 5,
+                            pointBackgroundColor: '#3b82f6',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 1
+                        },
+                        {
+                            label: 'Calculado (Integración)',
+                            data: [],
+                            borderColor: '#22c55e',
+                            backgroundColor: 'rgba(34, 197, 94, 0.2)',
+                            borderWidth: 2,
+                            tension: 0,
+                            borderDash: [5, 5],
+                            pointRadius: 3,
+                            pointHoverRadius: 5,
+                            pointBackgroundColor: '#22c55e',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 1,
+                            pointStyle: 'rect'
+                        }
+                    ]
+                },
+                options: {
+                    ...commonOptions,
+                    scales: {
+                        ...commonOptions.scales,
+                        y: { 
+                            title: { display: true, text: 'Combustible Δ (Litros)' },
+                            grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateChartsUpToIndex(targetIndex) {
+            const initialRow = csvData[0];
+            const initialDistance = initialRow['High Resolution Total Vehicle Distance (m)'];
+            const initialSensorFuel = initialRow['Engine Total Fuel Used (l)'];
+            const initialCalculatedFuel = initialRow['Combustible Calculado (l)'];
+            
+            fuelRateChart.data.labels = [];
+            fuelRateChart.data.datasets[0].data = [];
+            speedChart.data.labels = [];
+            speedChart.data.datasets[0].data = [];
+            fuelAccumulatedChart.data.labels = [];
+            fuelAccumulatedChart.data.datasets[0].data = [];
+            fuelAccumulatedChart.data.datasets[1].data = [];
+            distanceChart.data.labels = [];
+            distanceChart.data.datasets[0].data = [];
+            efficiencyChart.data.labels = [];
+            efficiencyChart.data.datasets[0].data = [];
+            fuelComparisonChart.data.labels = [];
+            fuelComparisonChart.data.datasets[0].data = [];
+            fuelComparisonChart.data.datasets[1].data = [];
+
+            const keepEveryN = Math.max(1, Math.floor(csvData.length / maxPointsInChart));
+
+            for (let i = 1; i <= targetIndex; i++) {  // Empezar desde i=1 en lugar de i=0
+                if (i % keepEveryN === 0 || i === targetIndex) {
+                    const row = csvData[i];
+                    const time = row.Time;
+                    const fuelRate = row['Engine Fuel Rate (l/h)'];
+                    const speed = row['Wheel-Based Vehicle Speed (kph)'];
+                    
+                    const sensorFuel = row['Engine Total Fuel Used (l)'];
+                    const calculatedFuel = row['Combustible Calculado (l)'];
+                    const distance = row['High Resolution Total Vehicle Distance (m)'];
+                    
+                    const deltaSensorFuel = sensorFuel - initialSensorFuel;
+                    const deltaCalculatedFuel = calculatedFuel - initialCalculatedFuel;
+                    const deltaDistance = distance - initialDistance;
+                    
+                    const efficiencyCalculated = deltaCalculatedFuel > 0 ? deltaDistance / deltaCalculatedFuel : 0;
+
+                    fuelRateChart.data.labels.push(time.toFixed(1));
+                    fuelRateChart.data.datasets[0].data.push(fuelRate);
+
+                    speedChart.data.labels.push(time.toFixed(1));
+                    speedChart.data.datasets[0].data.push(speed);
+
+                    fuelAccumulatedChart.data.labels.push(time.toFixed(1));
+                    fuelAccumulatedChart.data.datasets[0].data.push(deltaSensorFuel);
+                    fuelAccumulatedChart.data.datasets[1].data.push(deltaCalculatedFuel);
+
+                    distanceChart.data.labels.push(time.toFixed(1));
+                    distanceChart.data.datasets[0].data.push(deltaDistance);
+
+                    efficiencyChart.data.labels.push(time.toFixed(1));
+                    efficiencyChart.data.datasets[0].data.push(efficiencyCalculated);
+
+                    fuelComparisonChart.data.labels.push(time.toFixed(1));
+                    fuelComparisonChart.data.datasets[0].data.push(deltaSensorFuel);
+                    fuelComparisonChart.data.datasets[1].data.push(deltaCalculatedFuel);
+                }
+            }
+
+            fuelRateChart.update('none');
+            speedChart.update('none');
+            fuelAccumulatedChart.update('none');
+            distanceChart.update('none');
+            efficiencyChart.update('none');
+            fuelComparisonChart.update('none');
+        }
+
+        function updateCharts(row) {
+            const initialRow = csvData[0];
+            const initialDistance = initialRow['High Resolution Total Vehicle Distance (m)'];
+            const initialSensorFuel = initialRow['Engine Total Fuel Used (l)'];
+            const initialCalculatedFuel = initialRow['Combustible Calculado (l)'];
+            
+            const time = row.Time;
+            const fuelRate = row['Engine Fuel Rate (l/h)'];
+            const speed = row['Wheel-Based Vehicle Speed (kph)'];
+            
+            const sensorFuel = row['Engine Total Fuel Used (l)'];
+            const calculatedFuel = row['Combustible Calculado (l)'];
+            const distance = row['High Resolution Total Vehicle Distance (m)'];
+            
+            const deltaSensorFuel = sensorFuel - initialSensorFuel;
+            const deltaCalculatedFuel = calculatedFuel - initialCalculatedFuel;
+            const deltaDistance = distance - initialDistance;
+            
+            const efficiencyCalculated = deltaCalculatedFuel > 0 ? deltaDistance / deltaCalculatedFuel : 0;
+
+            const keepEveryN = Math.max(1, Math.floor(csvData.length / maxPointsInChart));
+            
+            if (currentIndex > 0 && currentIndex % keepEveryN === 0) {  // Solo si currentIndex > 0
+                fuelRateChart.data.labels.push(time.toFixed(1));
+                fuelRateChart.data.datasets[0].data.push(fuelRate);
+                if (fuelRateChart.data.labels.length > maxPointsInChart) {
+                    fuelRateChart.data.labels.shift();
+                    fuelRateChart.data.datasets[0].data.shift();
+                }
+                fuelRateChart.update('none');
+
+                speedChart.data.labels.push(time.toFixed(1));
+                speedChart.data.datasets[0].data.push(speed);
+                if (speedChart.data.labels.length > maxPointsInChart) {
+                    speedChart.data.labels.shift();
+                    speedChart.data.datasets[0].data.shift();
+                }
+                speedChart.update('none');
+
+                fuelAccumulatedChart.data.labels.push(time.toFixed(1));
+                fuelAccumulatedChart.data.datasets[0].data.push(deltaSensorFuel);
+                fuelAccumulatedChart.data.datasets[1].data.push(deltaCalculatedFuel);
+                if (fuelAccumulatedChart.data.labels.length > maxPointsInChart) {
+                    fuelAccumulatedChart.data.labels.shift();
+                    fuelAccumulatedChart.data.datasets[0].data.shift();
+                    fuelAccumulatedChart.data.datasets[1].data.shift();
+                }
+                fuelAccumulatedChart.update('none');
+
+                distanceChart.data.labels.push(time.toFixed(1));
+                distanceChart.data.datasets[0].data.push(deltaDistance);
+                if (distanceChart.data.labels.length > maxPointsInChart) {
+                    distanceChart.data.labels.shift();
+                    distanceChart.data.datasets[0].data.shift();
+                }
+                distanceChart.update('none');
+
+                efficiencyChart.data.labels.push(time.toFixed(1));
+                efficiencyChart.data.datasets[0].data.push(efficiencyCalculated);
+                if (efficiencyChart.data.labels.length > maxPointsInChart) {
+                    efficiencyChart.data.labels.shift();
+                    efficiencyChart.data.datasets[0].data.shift();
+                }
+                efficiencyChart.update('none');
+
+                fuelComparisonChart.data.labels.push(time.toFixed(1));
+                fuelComparisonChart.data.datasets[0].data.push(deltaSensorFuel);
+                fuelComparisonChart.data.datasets[1].data.push(deltaCalculatedFuel);
+                if (fuelComparisonChart.data.labels.length > maxPointsInChart) {
+                    fuelComparisonChart.data.labels.shift();
+                    fuelComparisonChart.data.datasets[0].data.shift();
+                    fuelComparisonChart.data.datasets[1].data.shift();
+                }
+                fuelComparisonChart.update('none');
+            }
+        }
+
+        function updateCurrentValues(row) {
+            const initialRow = csvData[0];
+            
+            document.getElementById('currentTime').textContent = row.Time.toFixed(1) + ' s';
+            document.getElementById('currentSpeed').textContent = row['Wheel-Based Vehicle Speed (kph)'].toFixed(1) + ' km/h';
+            document.getElementById('currentFuelRate').textContent = row['Engine Fuel Rate (l/h)'].toFixed(2) + ' L/h';
+            
+            const initialDistance = initialRow['High Resolution Total Vehicle Distance (m)'];
+            const currentDistance = row['High Resolution Total Vehicle Distance (m)'];
+            const deltaDistance = currentDistance - initialDistance;
+            
+            document.getElementById('currentDistance').textContent = deltaDistance.toFixed(3) + ' km';
+
+            const initialSensorFuel = initialRow['Engine Total Fuel Used (l)'];
+            const initialCalculatedFuel = initialRow['Combustible Calculado (l)'];
+            
+            const sensorFuel = row['Engine Total Fuel Used (l)'];
+            const calculatedFuel = row['Combustible Calculado (l)'];
+            
+            const deltaSensorFuel = sensorFuel - initialSensorFuel;
+            const deltaCalculatedFuel = calculatedFuel - initialCalculatedFuel;
+            
+            const difference = Math.abs(deltaSensorFuel - deltaCalculatedFuel);
+            const percentDiff = deltaSensorFuel > 0 ? (difference / deltaSensorFuel * 100) : 0;
+
+            document.getElementById('sensorFuel').textContent = deltaSensorFuel.toFixed(4) + ' L';
+            document.getElementById('calculatedFuel').textContent = deltaCalculatedFuel.toFixed(4) + ' L';
+            document.getElementById('fuelDifference').textContent = difference.toFixed(4) + ' L';
+            document.getElementById('fuelDifferencePercent').textContent = '(' + percentDiff.toFixed(4) + '%)';
+
+            const efficiencyCalculated = deltaCalculatedFuel > 0 ? deltaDistance / deltaCalculatedFuel : 0;
+            document.getElementById('efficiencyCalculated').textContent = efficiencyCalculated.toFixed(6) + ' km/L';
+        }
+
+        function updateProgress() {
+            if (csvData.length === 0) return;
+            
+            const progress = (currentIndex / (csvData.length - 1)) * 100;
+            const currentTime = csvData[currentIndex].Time;
+            const totalTime = csvData[csvData.length - 1].Time;
+            
+            document.getElementById('progressText').textContent = 
+                \`\${currentTime.toFixed(1)} s / \${totalTime.toFixed(1)} s (\${progress.toFixed(1)}%)\`;
+            
+            if (!isDraggingSlider) {
+                timeSlider.value = currentIndex;
+            }
+        }
+
+        // Play
+        document.getElementById('playBtn').addEventListener('click', () => {
+            if (csvData.length === 0) return;
+            
+            isPlaying = true;
+            document.getElementById('playBtn').classList.add('hidden');
+            document.getElementById('pauseBtn').classList.remove('hidden');
+            
+            const speed = parseInt(document.getElementById('speedSelect').value);
+            
+            let totalDt = 0;
+            let count = 0;
+            for (let i = 1; i < Math.min(100, csvData.length); i++) {
+                totalDt += csvData[i].Time - csvData[i-1].Time;
+                count++;
+            }
+            const avgDt = count > 0 ? totalDt / count : 1.0;
+            const interval = (avgDt * 1000) / speed;
+            
+            animationInterval = setInterval(() => {
+                if (currentIndex >= csvData.length - 1) {
+                    pause();
+                    return;
+                }
+                
+                currentIndex++;
+                updateCurrentValues(csvData[currentIndex]);
+                updateCharts(csvData[currentIndex]);
+                updateProgress();
+            }, interval);
+        });
+
+        function pause() {
+            isPlaying = false;
+            document.getElementById('playBtn').classList.remove('hidden');
+            document.getElementById('pauseBtn').classList.add('hidden');
+            clearInterval(animationInterval);
+        }
+
+        document.getElementById('pauseBtn').addEventListener('click', pause);
+
+        function resetSimulation() {
+            pause();
+            currentIndex = 0;
+            
+            if (csvData.length > 0) {
+                updateCurrentValues(csvData[0]);
+                updateProgress();
+            }
+            
+            if (fuelRateChart) {
+                fuelRateChart.data.labels = [];
+                fuelRateChart.data.datasets[0].data = [];
+                fuelRateChart.update();
+            }
+            if (speedChart) {
+                speedChart.data.labels = [];
+                speedChart.data.datasets[0].data = [];
+                speedChart.update();
+            }
+            if (fuelAccumulatedChart) {
+                fuelAccumulatedChart.data.labels = [];
+                fuelAccumulatedChart.data.datasets[0].data = [];
+                fuelAccumulatedChart.data.datasets[1].data = [];
+                fuelAccumulatedChart.update();
+            }
+            if (distanceChart) {
+                distanceChart.data.labels = [];
+                distanceChart.data.datasets[0].data = [];
+                distanceChart.update();
+            }
+            if (efficiencyChart) {
+                efficiencyChart.data.labels = [];
+                efficiencyChart.data.datasets[0].data = [];
+                efficiencyChart.update();
+            }
+            if (fuelComparisonChart) {
+                fuelComparisonChart.data.labels = [];
+                fuelComparisonChart.data.datasets[0].data = [];
+                fuelComparisonChart.data.datasets[1].data = [];
+                fuelComparisonChart.update();
+            }
+        }
+
+        document.getElementById('resetBtn').addEventListener('click', resetSimulation);
+
+        document.getElementById('speedSelect').addEventListener('change', () => {
+            if (isPlaying) {
+                pause();
+                document.getElementById('playBtn').click();
+            }
+        });
+    </script>
+</body>
+</html>`;
