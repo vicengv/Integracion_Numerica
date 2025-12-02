@@ -66,7 +66,7 @@ export default function VisualizadorSimplificado() {
   useEffect(() => {
     // Si ya hay datos cargados, no hacer nada
     if (csvData.length > 0) return;
-    fetch('/Recorrido_1.txt')
+    fetch(`${import.meta.env.BASE_URL}Recorrido_1.txt`)
       .then(res => {
         if (!res.ok) throw new Error('No se encontró Recorrido_1.txt en /public');
         return res.text();
