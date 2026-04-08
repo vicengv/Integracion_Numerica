@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Integración Numérica Multidimensional</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #faf9f6;
+            --bg2: #f0eee9;
+            --bg3: #e6e3dc;
+            --card: #ffffff;
+            --border: #d8d4cb;
+            --border-light: #e8e5de;
+            --text: #1a1a18;
+            --text2: #5c5a54;
+            --text3: #8a877e;
+            --accent: #b44a2d;
+            --accent2: #d4652e;
+            --accent-bg: #fdf0eb;
+            --blue: #2e6ba4;
+            --blue-bg: #eaf1f8;
+            --green: #3a7d44;
+            --green-bg: #eaf5ec;
+            --purple: #6b4c9a;
+            --purple-bg: #f0ecf5;
+            --amber: #9a7b2e;
+            --amber-bg: #faf5e6;
+            --red: #b43a3a;
+            --red-bg: #fbeeee;
+            --mono: 'DM Mono', monospace;
+            --sans: 'DM Sans', sans-serif;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--sans); background: var(--bg); color: var(--text); line-height: 1.6; }
+        .container { max-width: 1060px; margin: 0 auto; padding: 32px 24px; }
+
+        /* Header */
+        header { text-align: center; margin-bottom: 40px; }
+        header h1 { font-size: 2rem; font-weight: 700; letter-spacing: -0.03em; color: var(--text); }
+        header h1 span { color: var(--accent); }
+        header p { color: var(--text2); font-size: 0.95rem; margin-top: 6px; font-weight: 400; }
+
+        /* Tabs */
+        .tabs { display: flex; gap: 6px; margin-bottom: 32px; overflow-x: auto; padding: 4px; background: var(--bg2); border-radius: 12px; }
+        .tab { padding: 10px 18px; border-radius: 9px; border: none; background: transparent; color: var(--text3); cursor: pointer; font-family: var(--sans); font-size: 0.82rem; font-weight: 600; white-space: nowrap; transition: all 0.2s; }
+        .tab:hover { color: var(--text2); background: var(--bg3); }
+        .tab.active { background: var(--card); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+
+        /* Cards */
+        .card { background: var(--card); border: 1px solid var(--border-light); border-radius: 14px; padding: 28px; margin-bottom: 20px; }
+        .card-sm { padding: 20px; }
+        .card-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; letter-spacing: -0.01em; }
+        .badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+        .badge-accent { background: var(--accent-bg); color: var(--accent); }
+        .badge-blue { background: var(--blue-bg); color: var(--blue); }
+        .badge-green { background: var(--green-bg); color: var(--green); }
+        .badge-purple { background: var(--purple-bg); color: var(--purple); }
+
+        /* Grid layouts */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+
+        /* Stat boxes */
+        .stat { background: var(--bg2); border-radius: 10px; padding: 14px; text-align: center; }
+        .stat-label { font-size: 0.68rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+        .stat-value { font-family: var(--mono); font-size: 1.2rem; font-weight: 500; margin-top: 4px; }
+        .stat-sub { font-size: 0.7rem; color: var(--text3); margin-top: 2px; }
+
+        /* Buttons */
+        .btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 20px; border-radius: 10px; border: 1px solid var(--border); cursor: pointer; font-family: var(--sans); font-size: 0.85rem; font-weight: 600; transition: all 0.15s; background: var(--card); color: var(--text); }
+        .btn:hover { border-color: var(--text3); }
+        .btn-accent { background: var(--accent); color: white; border-color: var(--accent); }
+        .btn-accent:hover { background: var(--accent2); border-color: var(--accent2); }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .btn-group { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+
+        /* Formula */
+        .formula { font-family: var(--mono); text-align: center; font-size: 1.05rem; font-weight: 500; padding: 14px; background: var(--bg2); border-radius: 10px; margin: 12px 0; color: var(--text); }
+
+        /* Highlight */
+        .hl { padding: 18px; border-radius: 10px; margin: 14px 0; font-size: 0.88rem; line-height: 1.65; }
+        .hl-accent { background: var(--accent-bg); border-left: 3px solid var(--accent); }
+        .hl-blue { background: var(--blue-bg); border-left: 3px solid var(--blue); }
+        .hl-green { background: var(--green-bg); border-left: 3px solid var(--green); }
+        .hl-purple { background: var(--purple-bg); border-left: 3px solid var(--purple); }
+        .hl-amber { background: var(--amber-bg); border-left: 3px solid var(--amber); }
+
+        /* Steps */
+        .steps { display: flex; flex-direction: column; gap: 10px; }
+        .step { display: flex; gap: 14px; padding: 14px; background: var(--bg2); border-radius: 10px; align-items: flex-start; }
+        .step-n { width: 28px; height: 28px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.78rem; flex-shrink: 0; }
+        .step h4 { font-size: 0.88rem; font-weight: 700; }
+        .step p { font-size: 0.82rem; color: var(--text2); }
+
+        /* Canvas area */
+        .canvas-wrap { background: var(--bg2); border: 1px solid var(--border-light); border-radius: 12px; padding: 16px; position: relative; overflow: hidden; }
+        canvas { display: block; margin: 0 auto; image-rendering: pixelated; border-radius: 6px; }
+
+        /* Slider group */
+        .slider-group { display: flex; align-items: center; gap: 12px; font-size: 0.82rem; color: var(--text2); }
+        .slider-group label { font-weight: 600; min-width: 50px; }
+        .slider-group input[type=range] { flex: 1; }
+        .slider-group .val { font-family: var(--mono); font-weight: 500; min-width: 36px; text-align: right; color: var(--text); }
+
+        /* Table */
+        .tbl { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+        .tbl th { text-align: left; padding: 10px 14px; background: var(--bg2); color: var(--text3); font-weight: 600; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.05em; }
+        .tbl td { padding: 10px 14px; border-top: 1px solid var(--border-light); color: var(--text2); }
+        .tbl tr:hover td { background: var(--bg); }
+
+        /* Inline code */
+        code { font-family: var(--mono); font-size: 0.85em; background: var(--bg2); padding: 2px 6px; border-radius: 4px; }
+
+        /* Text utilities */
+        .t-accent { color: var(--accent); }
+        .t-blue { color: var(--blue); }
+        .t-green { color: var(--green); }
+        .t-purple { color: var(--purple); }
+        .t-amber { color: var(--amber); }
+        .t-red { color: var(--red); }
+        .t-muted { color: var(--text2); }
+        .t-sm { font-size: 0.85rem; }
+        .t-xs { font-size: 0.78rem; }
+        .t-center { text-align: center; }
+        .t-mono { font-family: var(--mono); }
+        .fw-700 { font-weight: 700; }
+        .mb-8 { margin-bottom: 8px; }
+        .mb-12 { margin-bottom: 12px; }
+        .mb-16 { margin-bottom: 16px; }
+        .mb-20 { margin-bottom: 20px; }
+        .mt-12 { margin-top: 12px; }
+        .mt-16 { margin-top: 16px; }
+
+        /* Progress bar */
+        .progress-bar { height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; margin-top: 8px; }
+        .progress-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+
+        /* Result card */
+        .result-card { background: linear-gradient(135deg, var(--accent-bg), var(--blue-bg)); border: 1px solid var(--border-light); border-radius: 14px; padding: 28px; text-align: center; }
+        .result-big { font-family: var(--mono); font-size: 2.2rem; font-weight: 700; color: var(--accent); }
+
+        @media (max-width: 768px) {
+            .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr 1fr; }
+            .container { padding: 20px 14px; }
+            header h1 { font-size: 1.5rem; }
+        }
+
+        .fade-in { animation: fadeIn 0.35s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+// ══════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════
+let S = {
+    tab: 'fundamentos2d',
+    // 2D sim
+    n2d: 10,
+    method2d: 'riemann',
+    result2d: null,
+    monteN: 1000,
+    montResult: null,
+    montPoints: [],
+    // 3D sim
+    n3d: 8,
+    method3d: 'riemann3d',
+    result3d: null,
+    monte3dN: 5000,
+    mont3dResult: null,
+    // comparison
+    compResults: null
+};
+
+// ══════════════════════════════════════════════════════════════
+// TEMPERATURE FUNCTIONS
+// ══════════════════════════════════════════════════════════════
+
+// 2D: T(x,y) on [0,1]×[0,1] — hot spot at (0.3, 0.7), warm region around (0.8, 0.2)
+function T2d(x, y) {
+    const d1 = Math.sqrt((x - 0.3) ** 2 + (y - 0.7) ** 2);
+    const d2 = Math.sqrt((x - 0.8) ** 2 + (y - 0.2) ** 2);
+    return 100 * Math.exp(-5 * d1 * d1) + 60 * Math.exp(-8 * d2 * d2) + 20;
+}
+
+// 3D: T(x,y,z) on [0,1]^3 — extends 2D with z-dependent decay
+function T3d(x, y, z) {
+    return T2d(x, y) * Math.exp(-2 * (z - 0.5) ** 2);
+}
+
+// Analytical approx for 2D (computed by high-res numerical for reference)
+const EXACT_2D = (() => {
+    let s = 0; const N = 500;
+    const h = 1 / N;
+    for (let i = 0; i < N; i++)
+        for (let j = 0; j < N; j++)
+            s += T2d((i + 0.5) * h, (j + 0.5) * h);
+    return s * h * h;
+})();
+
+const EXACT_3D = (() => {
+    let s = 0; const N = 80;
+    const h = 1 / N;
+    for (let i = 0; i < N; i++)
+        for (let j = 0; j < N; j++)
+            for (let k = 0; k < N; k++)
+                s += T3d((i + 0.5) * h, (j + 0.5) * h, (k + 0.5) * h);
+    return s * h * h * h;
+})();
+
+// ══════════════════════════════════════════════════════════════
+// INTEGRATION METHODS — 2D
+// ══════════════════════════════════════════════════════════════
+
+function riemann2d(n) {
+    const h = 1 / n;
+    let sum = 0;
+    const cells = [];
+    for (let i = 0; i < n; i++) {
+        for (let j = 0; j < n; j++) {
+            const x = i * h, y = j * h;
+            const val = T2d(x, y);
+            sum += val;
+            cells.push({ x, y, w: h, h: h, val });
+        }
+    }
+    return { value: sum * h * h, cells, method: 'Riemann 2D (izquierda)', n };
+}
+
+function trapezoidal2d(n) {
+    const h = 1 / n;
+    let sum = 0;
+    const cells = [];
+    for (let i = 0; i <= n; i++) {
+        for (let j = 0; j <= n; j++) {
+            const x = i * h, y = j * h;
+            let w = 1;
+            if (i === 0 || i === n) w *= 0.5;
+            if (j === 0 || j === n) w *= 0.5;
+            const val = T2d(x, y);
+            sum += w * val;
+            cells.push({ x: Math.max(0, x - h / 2), y: Math.max(0, y - h / 2), w: h, h: h, val });
+        }
+    }
+    return { value: sum * h * h, cells, method: 'Trapecio 2D', n };
+}
+
+function simpson2d(n) {
+    let nn = n % 2 === 0 ? n : n + 1;
+    const h = 1 / nn;
+    let sum = 0;
+    const cells = [];
+    for (let i = 0; i <= nn; i++) {
+        for (let j = 0; j <= nn; j++) {
+            const x = i * h, y = j * h;
+            let wx = 1, wy = 1;
+            if (i === 0 || i === nn) wx = 1; else if (i % 2 === 1) wx = 4; else wx = 2;
+            if (j === 0 || j === nn) wy = 1; else if (j % 2 === 1) wy = 4; else wy = 2;
+            const val = T2d(x, y);
+            sum += wx * wy * val;
+            cells.push({ x: Math.max(0, x - h / 2), y: Math.max(0, y - h / 2), w: h, h: h, val, weight: wx * wy });
+        }
+    }
+    return { value: sum * h * h / 9, cells, method: 'Simpson 2D', n: nn };
+}
+
+function montecarlo2d(N) {
+    let sum = 0;
+    const points = [];
+    for (let i = 0; i < N; i++) {
+        const x = Math.random(), y = Math.random();
+        const val = T2d(x, y);
+        sum += val;
+        points.push({ x, y, val });
+    }
+    const area = 1; // domain [0,1]×[0,1]
+    return { value: (sum / N) * area, points, method: 'Monte Carlo 2D', n: N };
+}
+
+// ══════════════════════════════════════════════════════════════
+// INTEGRATION METHODS — 3D
+// ══════════════════════════════════════════════════════════════
+
+function riemann3d(n) {
+    const h = 1 / n;
+    let sum = 0;
+    for (let i = 0; i < n; i++)
+        for (let j = 0; j < n; j++)
+            for (let k = 0; k < n; k++)
+                sum += T3d(i * h, j * h, k * h);
+    return { value: sum * h * h * h, method: 'Riemann 3D', n, total_cells: n ** 3 };
+}
+
+function simpson3d(n) {
+    let nn = n % 2 === 0 ? n : n + 1;
+    const h = 1 / nn;
+    let sum = 0;
+    for (let i = 0; i <= nn; i++) {
+        let wi = (i === 0 || i === nn) ? 1 : (i % 2 === 1 ? 4 : 2);
+        for (let j = 0; j <= nn; j++) {
+            let wj = (j === 0 || j === nn) ? 1 : (j % 2 === 1 ? 4 : 2);
+            for (let k = 0; k <= nn; k++) {
+                let wk = (k === 0 || k === nn) ? 1 : (k % 2 === 1 ? 4 : 2);
+                sum += wi * wj * wk * T3d(i * h, j * h, k * h);
+            }
+        }
+    }
+    return { value: sum * h * h * h / 27, method: 'Simpson 3D', n: nn, total_cells: (nn + 1) ** 3 };
+}
+
+function montecarlo3d(N) {
+    let sum = 0;
+    for (let i = 0; i < N; i++)
+        sum += T3d(Math.random(), Math.random(), Math.random());
+    return { value: sum / N, method: 'Monte Carlo 3D', n: N };
+}
+
+// ══════════════════════════════════════════════════════════════
+// COMPARISON
+// ══════════════════════════════════════════════════════════════
+
+function runComparison() {
+    const results = [];
+    [4, 6, 8, 10, 14, 20, 30, 50].forEach(n => {
+        const t0 = performance.now();
+        const r = riemann2d(n);
+        const t1 = performance.now();
+        results.push({ method: 'Riemann', n, value: r.value, error: Math.abs(r.value - EXACT_2D), errorPct: Math.abs(r.value - EXACT_2D) / EXACT_2D * 100, time: t1 - t0, evals: n * n });
+    });
+    [4, 6, 8, 10, 14, 20, 30, 50].forEach(n => {
+        const nn = n % 2 === 0 ? n : n + 1;
+        const t0 = performance.now();
+        const r = simpson2d(n);
+        const t1 = performance.now();
+        results.push({ method: 'Simpson', n: nn, value: r.value, error: Math.abs(r.value - EXACT_2D), errorPct: Math.abs(r.value - EXACT_2D) / EXACT_2D * 100, time: t1 - t0, evals: (nn + 1) ** 2 });
+    });
+    [100, 500, 1000, 5000, 10000, 50000, 100000].forEach(n => {
+        const t0 = performance.now();
+        const r = montecarlo2d(n);
+        const t1 = performance.now();
+        results.push({ method: 'Monte Carlo', n, value: r.value, error: Math.abs(r.value - EXACT_2D), errorPct: Math.abs(r.value - EXACT_2D) / EXACT_2D * 100, time: t1 - t0, evals: n });
+    });
+    return results;
+}
+
+// ══════════════════════════════════════════════════════════════
+// DRAWING — Heatmap
+// ══════════════════════════════════════════════════════════════
+
+function tempToColor(t) {
+    // cold (blue) → warm (orange) → hot (red/white)
+    const norm = Math.min(1, Math.max(0, (t - 20) / 100));
+    let r, g, b;
+    if (norm < 0.5) {
+        const p = norm * 2;
+        r = Math.round(30 + p * 200);
+        g = Math.round(60 + p * 100 - p * p * 60);
+        b = Math.round(180 - p * 140);
+    } else {
+        const p = (norm - 0.5) * 2;
+        r = Math.round(230 + p * 25);
+        g = Math.round(160 - p * 120);
+        b = Math.round(40 - p * 30);
+    }
+    return `rgb(${r},${g},${b})`;
+}
+
+function drawHeatmap(canvasId, size) {
+    const c = document.getElementById(canvasId);
+    if (!c) return;
+    c.width = size; c.height = size;
+    const ctx = c.getContext('2d');
+    const res = 200;
+    const px = size / res;
+    for (let i = 0; i < res; i++) {
+        for (let j = 0; j < res; j++) {
+            const x = i / res, y = 1 - j / res;
+            ctx.fillStyle = tempToColor(T2d(x, y));
+            ctx.fillRect(i * px, j * px, px + 0.5, px + 0.5);
+        }
+    }
+}
+
+function drawHeatmapWithGrid(canvasId, size, n, cells, method) {
+    const c = document.getElementById(canvasId);
+    if (!c) return;
+    c.width = size; c.height = size;
+    const ctx = c.getContext('2d');
+    // Background heatmap
+    const res = 150;
+    const px = size / res;
+    for (let i = 0; i < res; i++) {
+        for (let j = 0; j < res; j++) {
+            const x = i / res, y = 1 - j / res;
+            ctx.fillStyle = tempToColor(T2d(x, y));
+            ctx.fillRect(i * px, j * px, px + 0.5, px + 0.5);
+        }
+    }
+    // Grid overlay
+    if (cells && method !== 'Monte Carlo 2D') {
+        ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+        ctx.lineWidth = 0.8;
+        const h = size / n;
+        for (let i = 0; i <= n; i++) {
+            ctx.beginPath(); ctx.moveTo(i * h, 0); ctx.lineTo(i * h, size); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(0, i * h); ctx.lineTo(size, i * h); ctx.stroke();
+        }
+    }
+}
+
+function drawMonteCarloVis(canvasId, size, points) {
+    const c = document.getElementById(canvasId);
+    if (!c) return;
+    c.width = size; c.height = size;
+    const ctx = c.getContext('2d');
+    // Background heatmap (faded)
+    const res = 100;
+    const px = size / res;
+    for (let i = 0; i < res; i++) {
+        for (let j = 0; j < res; j++) {
+            const x = i / res, y = 1 - j / res;
+            ctx.fillStyle = tempToColor(T2d(x, y));
+            ctx.globalAlpha = 0.4;
+            ctx.fillRect(i * px, j * px, px + 0.5, px + 0.5);
+        }
+    }
+    ctx.globalAlpha = 1;
+    // Points
+    const maxShow = Math.min(points.length, 3000);
+    points.slice(0, maxShow).forEach(p => {
+        ctx.fillStyle = tempToColor(p.val);
+        ctx.beginPath();
+        ctx.arc(p.x * size, (1 - p.y) * size, 2, 0, Math.PI * 2);
+        ctx.fill();
+    });
+}
+
+function draw3dSlices(canvasId, size, nSlices) {
+    const c = document.getElementById(canvasId);
+    if (!c) return;
+    c.width = size; c.height = size;
+    const ctx = c.getContext('2d');
+    const sliceH = size / nSlices;
+    const res = 60;
+    for (let s = 0; s < nSlices; s++) {
+        const z = (s + 0.5) / nSlices;
+        const sliceSize = size * 0.6;
+        const offsetX = (size - sliceSize) / 2 + s * 3;
+        const offsetY = s * sliceH * 0.3 + 20;
+        const px = sliceSize / res;
+        ctx.globalAlpha = 0.7;
+        for (let i = 0; i < res; i++) {
+            for (let j = 0; j < res; j++) {
+                const x = i / res, y = 1 - j / res;
+                ctx.fillStyle = tempToColor(T3d(x, y, z));
+                ctx.fillRect(offsetX + i * px, offsetY + j * px, px + 0.5, px + 0.5);
+            }
+        }
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+        ctx.strokeRect(offsetX, offsetY, sliceSize, sliceSize);
+        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+        ctx.font = '11px DM Mono';
+        ctx.fillText(`z=${z.toFixed(2)}`, offsetX + 4, offsetY + 14);
+    }
+}
+
+// ══════════════════════════════════════════════════════════════
+// COMPARISON CHART (canvas)
+// ══════════════════════════════════════════════════════════════
+
+function drawCompChart(canvasId, w, h, data) {
+    const c = document.getElementById(canvasId);
+    if (!c) return;
+    c.width = w; c.height = h;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#f8f7f4'; ctx.fillRect(0, 0, w, h);
+    const pad = { l: 70, r: 20, t: 30, b: 50 };
+    const gw = w - pad.l - pad.r, gh = h - pad.t - pad.b;
+
+    const methods = { 'Riemann': '#2e6ba4', 'Simpson': '#3a7d44', 'Monte Carlo': '#b44a2d' };
+    const grouped = {};
+    data.forEach(d => { (grouped[d.method] = grouped[d.method] || []).push(d); });
+
+    const maxEvals = Math.max(...data.map(d => Math.log10(d.evals)));
+    const maxErr = Math.max(...data.filter(d => d.errorPct > 0).map(d => Math.log10(d.errorPct)));
+    const minErr = Math.min(...data.filter(d => d.errorPct > 0).map(d => Math.log10(d.errorPct)));
+
+    // Grid
+    ctx.strokeStyle = '#e0ddd6'; ctx.lineWidth = 0.5;
+    for (let i = 0; i <= 5; i++) {
+        const y = pad.t + (i / 5) * gh;
+        ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + gw, y); ctx.stroke();
+    }
+
+    // Axes
+    ctx.strokeStyle = '#8a877e'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(pad.l, pad.t); ctx.lineTo(pad.l, pad.t + gh); ctx.lineTo(pad.l + gw, pad.t + gh); ctx.stroke();
+
+    // Labels
+    ctx.fillStyle = '#5c5a54'; ctx.font = '11px DM Sans';
+    ctx.textAlign = 'center';
+    ctx.fillText('Evaluaciones de f (log₁₀)', pad.l + gw / 2, h - 8);
+    ctx.save(); ctx.translate(14, pad.t + gh / 2); ctx.rotate(-Math.PI / 2);
+    ctx.fillText('Error % (log₁₀)', 0, 0); ctx.restore();
+
+    // Plot lines
+    Object.entries(grouped).forEach(([method, pts]) => {
+        const color = methods[method];
+        ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 2;
+        ctx.beginPath();
+        let started = false;
+        pts.filter(p => p.errorPct > 0).sort((a, b) => a.evals - b.evals).forEach(p => {
+            const px = pad.l + ((Math.log10(p.evals) - 1) / (maxEvals - 1)) * gw;
+            const py = pad.t + (1 - (Math.log10(p.errorPct) - minErr) / (maxErr - minErr)) * gh;
+            if (!started) { ctx.moveTo(px, py); started = true; } else ctx.lineTo(px, py);
+        });
+        ctx.stroke();
+        // Dots
+        pts.filter(p => p.errorPct > 0).forEach(p => {
+            const px = pad.l + ((Math.log10(p.evals) - 1) / (maxEvals - 1)) * gw;
+            const py = pad.t + (1 - (Math.log10(p.errorPct) - minErr) / (maxErr - minErr)) * gh;
+            ctx.beginPath(); ctx.arc(px, py, 3.5, 0, Math.PI * 2); ctx.fill();
+        });
+    });
+
+    // Legend
+    let lx = pad.l + 10, ly = pad.t + 14;
+    Object.entries(methods).forEach(([name, color]) => {
+        ctx.fillStyle = color; ctx.fillRect(lx, ly - 6, 14, 3);
+        ctx.fillStyle = '#1a1a18'; ctx.font = '11px DM Sans'; ctx.textAlign = 'left';
+        ctx.fillText(name, lx + 20, ly); ly += 18;
+    });
+}
+
+// ══════════════════════════════════════════════════════════════
+// RENDER FUNCTIONS PER TAB
+// ══════════════════════════════════════════════════════════════
+
+function renderFundamentos2d() {
+    return `<div class="fade-in">
+    <div class="card">
+        <div class="card-title"><span class="badge badge-accent">Nuevo concepto</span> De 1D a 2D: el salto dimensional</div>
+        <div class="hl hl-accent">
+            <strong>En tu proyecto actual</strong> integras funciones de una variable: v(t), fr(t). Cada una produce rectángulos a lo largo del eje del tiempo. Ahora vamos a integrar funciones de <strong>dos variables independientes</strong>: f(x, y). Los rectángulos se convierten en prismas sobre una superficie.
+        </div>
+        <div class="grid-2 mt-16">
+            <div class="card card-sm" style="border-color:var(--blue); border-width:1px;">
+                <h4 class="mb-8 t-blue">1D — lo que ya tienes</h4>
+                <p class="t-sm t-muted mb-12">Una función f(t) sobre un intervalo [a, b].</p>
+                <div class="formula">∫<sub>a</sub><sup>b</sup> f(t) dt ≈ Σ f(tᵢ) · Δt</div>
+                <p class="t-xs t-muted">Sumas rectángulos. El resultado es un <strong>área</strong>.</p>
+            </div>
+            <div class="card card-sm" style="border-color:var(--accent); border-width:1px;">
+                <h4 class="mb-8 t-accent">2D — lo que vamos a hacer</h4>
+                <p class="t-sm t-muted mb-12">Una función f(x,y) sobre una región [a,b] × [c,d].</p>
+                <div class="formula">∫∫ f(x,y) dx dy ≈ ΣΣ f(xᵢ,yⱼ) · Δx · Δy</div>
+                <p class="t-xs t-muted">Sumas prismas rectangulares. El resultado es un <strong>volumen</strong>.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">El escenario: placa metálica con distribución de calor</div>
+        <p class="t-sm t-muted mb-16">Imagina una placa de metal de 1m × 1m. Tiene una fuente de calor cerca de la esquina superior izquierda y otra más moderada en la esquina inferior derecha. Cada punto (x, y) tiene una temperatura diferente T(x, y).</p>
+        <div class="grid-2">
+            <div>
+                <div class="hl hl-blue">
+                    <strong>La pregunta:</strong> ¿Cuánta energía térmica total tiene la placa?<br><br>
+                    Para responder necesitas "sumar" la temperatura de <strong>todos los puntos infinitos</strong> de la placa. Eso es la integral doble:<br><br>
+                    <code>Q = ∫∫ T(x,y) dx dy</code>
+                </div>
+                <div class="hl hl-green mt-12">
+                    <strong>La solución numérica:</strong> Dividir la placa en una cuadrícula de N×N celdas, evaluar T en cada celda, y sumar todo multiplicado por el área de cada celda (Δx × Δy).
+                </div>
+            </div>
+            <div class="canvas-wrap">
+                <canvas id="heatmapFund" style="width:100%;aspect-ratio:1;"></canvas>
+                <p class="t-xs t-muted t-center mt-12">Mapa de calor de T(x,y) — azul: frío, rojo: caliente</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">¿Por qué es diferente de lo que tenías?</div>
+        <div class="steps">
+            <div class="step">
+                <div class="step-n" style="background:var(--blue-bg);color:var(--blue);">1</div>
+                <div><h4>Variable independiente vs. más funciones</h4>
+                <p>En tu proyecto original, v(t) y fr(t) son dos funciones de la <strong>misma</strong> variable (t). Aquí, T(x,y) depende de <strong>dos variables independientes</strong> simultáneamente: la posición horizontal x y la vertical y.</p></div>
+            </div>
+            <div class="step">
+                <div class="step-n" style="background:var(--accent-bg);color:var(--accent);">2</div>
+                <div><h4>Doble suma en vez de suma simple</h4>
+                <p>En 1D haces <code>for i: sum += f(ti)*dt</code>. En 2D haces <code>for i: for j: sum += f(xi,yj)*dx*dy</code>. Es un ciclo anidado — por eso el costo crece como N² en vez de N.</p></div>
+            </div>
+            <div class="step">
+                <div class="step-n" style="background:var(--green-bg);color:var(--green);">3</div>
+                <div><h4>Prismas en vez de rectángulos</h4>
+                <p>Cada "bloque" ya no es un rectángulo plano — es un prisma rectangular con base Δx × Δy y altura T(xᵢ, yⱼ). El volumen total de todos los prismas = la integral.</p></div>
+            </div>
+        </div>
+    </div>
+    </div>`;
+}
+
+function renderMetodos2d() {
+    return `<div class="fade-in">
+    <div class="card">
+        <div class="card-title">Métodos de integración en 2D</div>
+        <p class="t-sm t-muted mb-20">Los mismos métodos que conoces de 1D se extienden a 2D — la idea es la misma, pero ahora aplicada en ambas direcciones.</p>
+
+        <div class="grid-2" style="gap:20px;">
+            <div class="card card-sm" style="border-left:3px solid var(--blue);border-radius:0 14px 14px 0;">
+                <h4 class="t-blue mb-8">Riemann 2D (izquierda)</h4>
+                <div class="formula t-sm">ΣΣ T(xᵢ, yⱼ) · Δx · Δy</div>
+                <p class="t-xs t-muted mt-12">Evalúa T en la esquina inferior-izquierda de cada celda. Es el más simple. Error: O(Δx + Δy).</p>
+            </div>
+            <div class="card card-sm" style="border-left:3px solid var(--green);border-radius:0 14px 14px 0;">
+                <h4 class="t-green mb-8">Trapecio 2D</h4>
+                <div class="formula t-sm">Σ wᵢ · wⱼ · T(xᵢ, yⱼ) · Δx · Δy</div>
+                <p class="t-xs t-muted mt-12">Usa pesos ½ en los bordes, 1 en el interior. Promedia trapecios en ambas direcciones. Error: O(Δx² + Δy²).</p>
+            </div>
+            <div class="card card-sm" style="border-left:3px solid var(--purple);border-radius:0 14px 14px 0;">
+                <h4 class="t-purple mb-8">Simpson 2D</h4>
+                <div class="formula t-sm">(Δx·Δy/9) · Σ wᵢ·wⱼ · T(xᵢ,yⱼ)</div>
+                <p class="t-xs t-muted mt-12">Pesos 1-4-2-4-1 en ambas direcciones. Requiere N par. Error: O(Δx⁴ + Δy⁴). Mucho más preciso.</p>
+            </div>
+            <div class="card card-sm" style="border-left:3px solid var(--accent);border-radius:0 14px 14px 0;">
+                <h4 class="t-accent mb-8">Monte Carlo</h4>
+                <div class="formula t-sm">A · (1/N) · Σ T(xₖ, yₖ)  con puntos aleatorios</div>
+                <p class="t-xs t-muted mt-12">Lanza N puntos al azar, evalúa T en cada uno, promedia y multiplica por el área. Error: O(1/√N). No depende de la dimensión.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><span class="badge badge-accent">Clave</span> ¿Por qué Monte Carlo importa?</div>
+        <div class="hl hl-accent">
+            <strong>La maldición de la dimensionalidad:</strong> Con una cuadrícula de N puntos por eje, en 2D necesitas N² evaluaciones, en 3D necesitas N³, en 10D necesitas N¹⁰. Si N=100, en 10D son 10²⁰ evaluaciones — imposible.<br><br>
+            Monte Carlo siempre necesita los mismos N puntos sin importar las dimensiones. Su error es O(1/√N) independientemente de si es 2D, 3D o 100D. Por eso es el método preferido para integrales en muchas dimensiones.
+        </div>
+    </div>
+    </div>`;
+}
+
+function renderSim2d() {
+    const result = S.result2d;
+    const err = result ? Math.abs(result.value - EXACT_2D) : 0;
+    const errPct = result ? (err / EXACT_2D * 100) : 0;
+
+    return `<div class="fade-in">
+    <div class="card">
+        <div class="card-title">Simulación: integral doble con cuadrícula</div>
+
+        <div class="btn-group">
+            <div class="slider-group" style="flex:1;max-width:300px;">
+                <label>N =</label>
+                <input type="range" min="2" max="60" value="${S.n2d}" oninput="S.n2d=+this.value;document.getElementById('nval2d').textContent=this.value;">
+                <span class="val" id="nval2d">${S.n2d}</span>
+            </div>
+            <select onchange="S.method2d=this.value;" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);font-family:var(--sans);font-size:0.82rem;">
+                <option value="riemann" ${S.method2d === 'riemann' ? 'selected' : ''}>Riemann</option>
+                <option value="trapezoidal" ${S.method2d === 'trapezoidal' ? 'selected' : ''}>Trapecio</option>
+                <option value="simpson" ${S.method2d === 'simpson' ? 'selected' : ''}>Simpson</option>
+            </select>
+            <button class="btn btn-accent" onclick="run2dGrid()">Calcular</button>
+        </div>
+
+        <div class="grid-4 mb-20">
+            <div class="stat">
+                <div class="stat-label">Resultado</div>
+                <div class="stat-value t-accent">${result ? result.value.toFixed(4) : '—'}</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Valor de referencia</div>
+                <div class="stat-value">${EXACT_2D.toFixed(4)}</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Error</div>
+                <div class="stat-value t-red">${result ? errPct.toFixed(4) + '%' : '—'}</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Evaluaciones</div>
+                <div class="stat-value t-blue">${result ? (result.method.includes('Simpson') ? (result.n + 1) ** 2 : result.n ** 2).toLocaleString() : '—'}</div>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="canvas-wrap">
+                <canvas id="heatmapGrid" style="width:100%;aspect-ratio:1;"></canvas>
+                <p class="t-xs t-muted t-center mt-12">Cuadrícula ${result ? result.n + '×' + result.n : 'N×N'} sobre el mapa de calor</p>
+            </div>
+            <div>
+                <div class="hl hl-blue">
+                    <strong>¿Qué ves?</strong> Cada celda de la cuadrícula es la base de un prisma rectangular. La "altura" del prisma es T(xᵢ, yⱼ) evaluado en esa celda. El volumen total de todos los prismas = el resultado de la integral.
+                </div>
+                ${result ? `
+                <div class="hl hl-green mt-12">
+                    <strong>Método:</strong> ${result.method}<br>
+                    <strong>Celdas:</strong> ${result.n} × ${result.n} = ${result.n ** 2}<br>
+                    <strong>Δx = Δy =</strong> ${(1 / result.n).toFixed(4)}<br>
+                    <strong>Error absoluto:</strong> ${err.toFixed(6)}<br>
+                    <strong>Error relativo:</strong> ${errPct.toFixed(4)}%
+                </div>` : ''}
+            </div>
+        </div>
+    </div>
+    </div>`;
+}
+
+function renderMonte2d() {
+    const result = S.montResult;
+    const err = result ? Math.abs(result.value - EXACT_2D) : 0;
+    const errPct = result ? (err / EXACT_2D * 100) : 0;
+
+    return `<div class="fade-in">
+    <div class="card">
+        <div class="card-title"><span class="badge badge-accent">Monte Carlo</span> Integral doble con puntos aleatorios</div>
+
+        <div class="btn-group">
+            <div class="slider-group" style="flex:1;max-width:340px;">
+                <label>Puntos =</label>
+                <input type="range" min="100" max="100000" step="100" value="${S.monteN}" oninput="S.monteN=+this.value;document.getElementById('mcval').textContent=Number(this.value).toLocaleString();">
+                <span class="val" id="mcval">${S.monteN.toLocaleString()}</span>
+            </div>
+            <button class="btn btn-accent" onclick="runMonte2d()">Lanzar puntos</button>
+        </div>
+
+        <div class="grid-4 mb-20">
+            <div class="stat">
+                <div class="stat-label">Resultado</div>
+                <div class="stat-value t-accent">${result ? result.value.toFixed(4) : '—'}</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Referencia</div>
+                <div class="stat-value">${EXACT_2D.toFixed(4)}</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Error</div>
+                <div class="stat-value t-red">${result ? errPct.toFixed(4) + '%' : '—'}</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Puntos usados</div>
+                <div class="stat-value t-purple">${result ? result.n.toLocaleString() : '—'}</div>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="canvas-wrap">
+                <canvas id="mcCanvas" style="width:100%;aspect-ratio:1;"></canvas>
+                <p class="t-xs t-muted t-center mt-12">Puntos aleatorios coloreados por T(x,y)</p>
+            </div>
+            <div>
+                <div class="hl hl-purple">
+                    <strong>¿Cómo funciona?</strong><br><br>
+                    1. Genera N puntos aleatorios (x, y) en [0,1]²<br>
+                    2. Evalúa T(x, y) en cada punto<br>
+                    3. Promedia todos los valores<br>
+                    4. Multiplica por el área del dominio (1×1 = 1)<br><br>
+                    <code>Q ≈ A · (1/N) · Σ T(xₖ, yₖ)</code>
+                </div>
+                <div class="hl hl-amber mt-12">
+                    <strong>Nota:</strong> Cada vez que presionas "Lanzar puntos", obtienes un resultado ligeramente diferente porque los puntos son aleatorios. Esa variabilidad disminuye con más puntos (error ∝ 1/√N).
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>`;
+}
+
+function renderSim3d() {
+    const result = S.result3d;
+    const err = result ? Math.abs(result.value - EXACT_3D) : 0;
+    const errPct = result ? (err / EXACT_3D * 100) : 0;
+
+    return `<div class="fade-in">
+    <div class="card">
+        <div class="card-title"><span class="badge badge-purple">3D</span> Integral triple: bloque sólido con calor</div>
+        <p class="t-sm t-muted mb-16">Ahora la placa tiene espesor. T(x, y, z) varía también con la profundidad z. La integral triple suma "cubos" en tres dimensiones para obtener la energía térmica total del volumen.</p>
+
+        <div class="formula mb-20">Q = ∫∫∫ T(x,y,z) dx dy dz ≈ ΣΣΣ T(xᵢ, yⱼ, zₖ) · Δx · Δy · Δz</div>
+
+        <div class="btn-group">
+            <div class="slider-group" style="flex:1;max-width:260px;">
+                <label>N =</label>
+                <input type="range" min="2" max="30" value="${S.n3d}" oninput="S.n3d=+this.value;document.getElementById('n3val').textContent=this.value;">
+                <span class="val" id="n3val">${S.n3d}</span>
+            </div>
+            <select onchange="S.method3d=this.value;" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);font-family:var(--sans);font-size:0.82rem;">
+                <option value="riemann3d" ${S.method3d === 'riemann3d' ? 'selected' : ''}>Riemann 3D</option>
+                <option value="simpson3d" ${S.method3d === 'simpson3d' ? 'selected' : ''}>Simpson 3D</option>
+            </select>
+            <button class="btn btn-accent" onclick="run3dGrid()">Calcular</button>
+            <span style="color:var(--text3);font-size:0.78rem;">N³ = ${(S.n3d ** 3).toLocaleString()} cubos</span>
+        </div>
+
+        <div class="grid-4 mb-20">
+            <div class="stat">
+                <div class="stat-label">Resultado</div>
+                <div class="stat-value t-purple">${result ? result.value.toFixed(4) : '—'}</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Referencia</div>
+                <div class="stat-value">${EXACT_3D.toFixed(4)}</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Error</div>
+                <div class="stat-value t-red">${result ? errPct.toFixed(4) + '%' : '—'}</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Evaluaciones</div>
+                <div class="stat-value t-blue">${result ? result.total_cells.toLocaleString() : '—'}</div>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="canvas-wrap">
+                <canvas id="slices3d" style="width:100%;aspect-ratio:1;"></canvas>
+                <p class="t-xs t-muted t-center mt-12">Cortes del volumen a diferentes profundidades z</p>
+            </div>
+            <div>
+                <div class="hl hl-purple">
+                    <strong>¿Qué cambia respecto a 2D?</strong><br><br>
+                    • En 2D sumabas prismas: f(x,y) · Δx · Δy<br>
+                    • En 3D sumas <strong>cubos</strong>: f(x,y,z) · Δx · Δy · Δz<br>
+                    • El ciclo ahora es triple: <code>for i, for j, for k</code><br>
+                    • Con N=10 por eje: 10³ = 1,000 cubos<br>
+                    • Con N=30 por eje: 30³ = 27,000 cubos
+                </div>
+                <div class="hl hl-accent mt-12">
+                    <strong>La maldición de la dimensionalidad:</strong> Si N=100 por eje, 2D usa 10,000 celdas, pero 3D usa 1,000,000. En 4D serían 100,000,000. Aquí es donde Monte Carlo brilla.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><span class="badge badge-accent">Monte Carlo 3D</span></div>
+        <div class="btn-group">
+            <div class="slider-group" style="flex:1;max-width:340px;">
+                <label>Puntos =</label>
+                <input type="range" min="500" max="100000" step="500" value="${S.monte3dN}" oninput="S.monte3dN=+this.value;document.getElementById('mc3val').textContent=Number(this.value).toLocaleString();">
+                <span class="val" id="mc3val">${S.monte3dN.toLocaleString()}</span>
+            </div>
+            <button class="btn btn-accent" onclick="runMonte3d()">Lanzar puntos 3D</button>
+        </div>
+        ${S.mont3dResult ? `
+        <div class="grid-3 mt-12">
+            <div class="stat"><div class="stat-label">Resultado MC</div><div class="stat-value t-accent">${S.mont3dResult.value.toFixed(4)}</div></div>
+            <div class="stat"><div class="stat-label">Referencia</div><div class="stat-value">${EXACT_3D.toFixed(4)}</div></div>
+            <div class="stat"><div class="stat-label">Error</div><div class="stat-value t-red">${(Math.abs(S.mont3dResult.value - EXACT_3D) / EXACT_3D * 100).toFixed(4)}%</div></div>
+        </div>` : ''}
+    </div>
+    </div>`;
+}
+
+function renderComparacion() {
+    if (!S.compResults) S.compResults = runComparison();
+    const data = S.compResults;
+
+    let rows = '';
+    data.forEach(d => {
+        const color = d.method === 'Riemann' ? 'blue' : d.method === 'Simpson' ? 'green' : 'accent';
+        rows += `<tr>
+            <td><span class="badge badge-${color}" style="font-size:0.65rem;">${d.method}</span></td>
+            <td class="t-mono">${d.n.toLocaleString()}</td>
+            <td class="t-mono">${d.evals.toLocaleString()}</td>
+            <td class="t-mono">${d.value.toFixed(4)}</td>
+            <td class="t-mono t-${d.errorPct < 0.1 ? 'green' : d.errorPct < 1 ? 'amber' : 'red'}">${d.errorPct.toFixed(4)}%</td>
+            <td class="t-mono">${d.time.toFixed(2)} ms</td>
+        </tr>`;
+    });
+
+    return `<div class="fade-in">
+    <div class="card">
+        <div class="card-title">Comparación de métodos: precisión vs costo</div>
+        <p class="t-sm t-muted mb-16">Referencia (N=500, Riemann): <strong class="t-mono">${EXACT_2D.toFixed(6)}</strong></p>
+
+        <div class="canvas-wrap mb-20">
+            <canvas id="compChart" style="width:100%;height:320px;"></canvas>
+            <p class="t-xs t-muted t-center mt-12">Eje X: evaluaciones de f (escala log). Eje Y: error relativo % (escala log). Abajo-izquierda = mejor.</p>
+        </div>
+
+        <div style="overflow-x:auto;">
+            <table class="tbl">
+                <thead><tr><th>Método</th><th>N</th><th>Evaluaciones</th><th>Resultado</th><th>Error %</th><th>Tiempo</th></tr></thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">Conclusiones</div>
+        <div class="steps">
+            <div class="step">
+                <div class="step-n" style="background:var(--blue-bg);color:var(--blue);">R</div>
+                <div><h4>Riemann es simple pero lento</h4>
+                <p>Necesita muchas celdas para ser preciso. Error O(h). Pero es fácil de implementar y entender.</p></div>
+            </div>
+            <div class="step">
+                <div class="step-n" style="background:var(--green-bg);color:var(--green);">S</div>
+                <div><h4>Simpson es el rey de las cuadrículas</h4>
+                <p>Con pocas celdas logra errores muy bajos. Error O(h⁴). El costo de implementación es bajo — solo cambian los pesos.</p></div>
+            </div>
+            <div class="step">
+                <div class="step-n" style="background:var(--accent-bg);color:var(--accent);">M</div>
+                <div><h4>Monte Carlo escala a cualquier dimensión</h4>
+                <p>En 2D no compite con Simpson, pero en 3D, 4D, 10D... es la única opción viable. Su error O(1/√N) no depende de la dimensión.</p></div>
+            </div>
+        </div>
+        <div class="hl hl-amber mt-16">
+            <strong>Para la maestra:</strong> El proyecto ahora demuestra integración numérica con 1, 2 y 3 variables independientes usando 4 métodos diferentes (Riemann, Trapecio, Simpson, Monte Carlo), con visualización interactiva y comparación cuantitativa de precisión vs costo computacional.
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">Refrescar datos</div>
+        <p class="t-sm t-muted mb-12">Monte Carlo usa puntos aleatorios, así que sus resultados varían. Presiona para recalcular todo.</p>
+        <button class="btn btn-accent" onclick="S.compResults=runComparison();render();setTimeout(()=>{drawCompChart('compChart',document.getElementById('compChart').parentElement.clientWidth-32,320,S.compResults);},50);">Recalcular comparación</button>
+    </div>
+    </div>`;
+}
+
+// ══════════════════════════════════════════════════════════════
+// ACTIONS
+// ══════════════════════════════════════════════════════════════
+
+window.run2dGrid = function() {
+    if (S.method2d === 'riemann') S.result2d = riemann2d(S.n2d);
+    else if (S.method2d === 'trapezoidal') S.result2d = trapezoidal2d(S.n2d);
+    else S.result2d = simpson2d(S.n2d);
+    render();
+    setTimeout(() => {
+        const el = document.getElementById('heatmapGrid');
+        if (el) drawHeatmapWithGrid('heatmapGrid', el.clientWidth, S.result2d.n, S.result2d.cells, S.result2d.method);
+    }, 30);
+};
+
+window.runMonte2d = function() {
+    S.montResult = montecarlo2d(S.monteN);
+    S.montPoints = S.montResult.points;
+    render();
+    setTimeout(() => {
+        const el = document.getElementById('mcCanvas');
+        if (el) drawMonteCarloVis('mcCanvas', el.clientWidth, S.montPoints);
+    }, 30);
+};
+
+window.run3dGrid = function() {
+    if (S.method3d === 'riemann3d') S.result3d = riemann3d(S.n3d);
+    else S.result3d = simpson3d(S.n3d);
+    render();
+    setTimeout(() => {
+        const el = document.getElementById('slices3d');
+        if (el) draw3dSlices('slices3d', el.clientWidth, Math.min(S.n3d, 6));
+    }, 30);
+};
+
+window.runMonte3d = function() {
+    S.mont3dResult = montecarlo3d(S.monte3dN);
+    render();
+};
+
+// ══════════════════════════════════════════════════════════════
+// MAIN RENDER
+// ══════════════════════════════════════════════════════════════
+
+const TABS = [
+    { id: 'fundamentos2d', label: 'Fundamentos 2D' },
+    { id: 'metodos2d', label: 'Métodos 2D' },
+    { id: 'sim2d', label: 'Simulación 2D' },
+    { id: 'monte2d', label: 'Monte Carlo 2D' },
+    { id: 'sim3d', label: '3D + Monte Carlo' },
+    { id: 'comparacion', label: 'Comparación' },
+];
+
+function render() {
+    const tabsHTML = TABS.map(t =>
+        `<button class="tab ${S.tab === t.id ? 'active' : ''}" onclick="S.tab='${t.id}';render();postRender();">${t.label}</button>`
+    ).join('');
+
+    let content = '';
+    switch (S.tab) {
+        case 'fundamentos2d': content = renderFundamentos2d(); break;
+        case 'metodos2d': content = renderMetodos2d(); break;
+        case 'sim2d': content = renderSim2d(); break;
+        case 'monte2d': content = renderMonte2d(); break;
+        case 'sim3d': content = renderSim3d(); break;
+        case 'comparacion': content = renderComparacion(); break;
+    }
+
+    document.getElementById('app').innerHTML = `
+        <div class="container">
+            <header>
+                <h1>Integración Numérica <span>Multidimensional</span></h1>
+                <p>De 1 variable a 2 y 3 variables independientes — Riemann, Trapecio, Simpson y Monte Carlo</p>
+            </header>
+            <div class="tabs">${tabsHTML}</div>
+            ${content}
+        </div>
+    `;
+}
+
+function postRender() {
+    setTimeout(() => {
+        if (S.tab === 'fundamentos2d') {
+            const el = document.getElementById('heatmapFund');
+            if (el) drawHeatmap('heatmapFund', el.clientWidth);
+        }
+        if (S.tab === 'sim2d' && S.result2d) {
+            const el = document.getElementById('heatmapGrid');
+            if (el) drawHeatmapWithGrid('heatmapGrid', el.clientWidth, S.result2d.n, S.result2d.cells, S.result2d.method);
+        }
+        if (S.tab === 'monte2d' && S.montPoints.length) {
+            const el = document.getElementById('mcCanvas');
+            if (el) drawMonteCarloVis('mcCanvas', el.clientWidth, S.montPoints);
+        }
+        if (S.tab === 'sim3d') {
+            const el = document.getElementById('slices3d');
+            if (el) draw3dSlices('slices3d', el.clientWidth, Math.min(S.n3d, 6));
+        }
+        if (S.tab === 'comparacion' && S.compResults) {
+            const el = document.getElementById('compChart');
+            if (el) drawCompChart('compChart', el.parentElement.clientWidth - 32, 320, S.compResults);
+        }
+    }, 50);
+}
+
+render();
+postRender();
+</script>
+</body>
+</html>
